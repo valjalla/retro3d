@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState, useEffect, useCallback } from "react";
+import React, { useRef, useState, useEffect, useCallback, useMemo } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
@@ -463,6 +463,7 @@ export default function ModelViewer() {
         ref={mountRef}
         id="interface-plane"
       />
+      <XEnoScript />
       <div className="grid-lines" />
       <div id="interface-panel">
         <div className="content-group">
@@ -480,7 +481,7 @@ export default function ModelViewer() {
               </div>
               <div className="stats-row">
                 <span className="stats-label">Meshes:</span>
-                <span className="stats-value">{modelStats.meshes}</span>
+                <span className="stats-value">{modelStats.meshes.toString()}</span>
               </div>
               <div className="stats-row">
                 <span className="stats-label">Vertices:</span>
@@ -488,7 +489,7 @@ export default function ModelViewer() {
               </div>
               <div className="stats-row">
                 <span className="stats-label">Materials:</span>
-                <span className="stats-value">{modelStats.materials}</span>
+                <span className="stats-value">{modelStats.materials.toString()}</span>
               </div>
               <div className="stats-row">
                 <span className="stats-label">Triangles:</span>
@@ -497,7 +498,7 @@ export default function ModelViewer() {
               <div className="stats-row">
                 <span className="stats-label">Size:</span>
                 <span className="stats-value">
-                  {modelStats.dimensions.width}×{modelStats.dimensions.height}×{modelStats.dimensions.depth}
+                  {`${modelStats.dimensions.width}×${modelStats.dimensions.height}×${modelStats.dimensions.depth}`}
                 </span>
               </div>
             </div>
@@ -562,5 +563,42 @@ function BuTTon({
         <span className="button-secondary-text">{secondaryText}</span>
       </div>
     </button>
+  );
+}
+
+function XEnoScript() {
+  const hebrewChars = "אבגדהוזחטיכלמנסעפצקרשת";
+  const greekChars = "αβδεζηθλμξπρφχψω";
+  const cyrillicChars = "бгджзлфцэюя";
+  const alienChars = hebrewChars + greekChars + cyrillicChars;
+  const [chars, setChars] = useState<any[]>([]);
+
+  useEffect(() => {
+    const generatedChars = Array.from({ length: 20 }).map((_, i) => ({
+      char: alienChars[Math.floor(Math.random() * alienChars.length)],
+      left: Math.random() * 90 + 5,
+      top: Math.random() * 90 + 5,
+      opacity: 0.5 + Math.random() * 0.5,
+      id: i,
+    }));
+    setChars(generatedChars);
+  }, []);
+
+  return (
+    <div className="alien-chars">
+      {chars.map(({ char, left, top, opacity, id }) => (
+        <div
+          key={id}
+          className="alien-char"
+          style={{
+            left: `${left}%`,
+            top: `${top}%`,
+            opacity,
+          }}
+        >
+          {char}
+        </div>
+      ))}
+    </div>
   );
 }
