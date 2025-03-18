@@ -37,10 +37,24 @@ declare module "three" {
   }
 }
 
+interface ModelStats {
+  vertices: number;
+  triangles: number;
+  meshes: number;
+  materials: number;
+  dimensions: {
+    width: number;
+    height: number;
+    depth: number;
+  };
+  fileName: string;
+}
+
 export default function ModelViewer() {
   const mountRef = useRef<HTMLDivElement>(null);
   const [viewMode, setViewMode] = useState<"normal" | "spider" | "holo">(DEFAULT_MATERIAL_MODE);
   const [modelLoaded, setModelLoaded] = useState(false);
+  const [modelStats, setModelStats] = useState<ModelStats | null>(null);
   const sceneRef = useRef<THREE.Scene>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera>(null);
   const rendererRef = useRef<THREE.WebGLRenderer>(null);
@@ -48,6 +62,56 @@ export default function ModelViewer() {
   const modelRef = useRef<THREE.Group<THREE.Object3DEventMap>>(null);
   const animationRef = useRef<number>(null);
   const timeRef = useRef<number>(0);
+
+  const calculateModelStats = (model: THREE.Group, fileName: string): ModelStats => {
+    let vertices = 0;
+    let triangles = 0;
+    let meshCount = 0;
+    const materials = new Set();
+
+    model.traverse((child) => {
+      if (child.isMesh) {
+        meshCount++;
+
+        if (child.material) {
+          if (Array.isArray(child.material)) {
+            child.material.forEach((mat) => materials.add(mat));
+          } else {
+            materials.add(child.material);
+          }
+        }
+
+        if (child.geometry) {
+          const geometry = child.geometry;
+          if (geometry.index !== null) {
+            triangles += geometry.index.count / 3;
+          } else if (geometry.attributes.position) {
+            triangles += geometry.attributes.position.count / 3;
+          }
+
+          if (geometry.attributes.position) {
+            vertices += geometry.attributes.position.count;
+          }
+        }
+      }
+    });
+
+    const box = new THREE.Box3().setFromObject(model);
+    const size = box.getSize(new THREE.Vector3());
+
+    return {
+      vertices,
+      triangles: Math.floor(triangles),
+      meshes: meshCount,
+      materials: materials.size,
+      dimensions: {
+        width: parseFloat(size.x.toFixed(2)),
+        height: parseFloat(size.y.toFixed(2)),
+        depth: parseFloat(size.z.toFixed(2)),
+      },
+      fileName: fileName || "Unknown Model",
+    };
+  };
 
   const loadModel = useCallback(
     (url: string) => {
@@ -94,6 +158,10 @@ export default function ModelViewer() {
           sceneRef.current.add(model);
           modelRef.current = model;
           setModelLoaded(true);
+
+          const fileName = url.startsWith("blob:") ? "Uploaded Model" : url.split("/").pop() || "Unknown Model";
+          const stats = calculateModelStats(model, fileName);
+          setModelStats(stats);
 
           applyMaterialMode(model, viewMode);
 
@@ -399,10 +467,42 @@ export default function ModelViewer() {
       <div id="interface-panel">
         <div className="content-group">
           <h1 id="interface-title">古典 RETRO3D MODEL</h1>
-          <p>
-            Upload a GLB model to view it in 3D. You can also switch between NOrmal, SPider, and HOlographic modes.
-          </p>
+          <p>Upload a GLB model to view it in 3D. You can also switch between NOrmal, SPider, and HOlographic modes.</p>
         </div>
+
+        {modelStats && (
+          <div className="content-group">
+            <h3>OBJECT ANALYSIS</h3>
+            <div className="stats-table">
+              <div className="stats-row">
+                <span className="stats-label">File:</span>
+                <span className="stats-value animate-blink">{modelStats.fileName}</span>
+              </div>
+              <div className="stats-row">
+                <span className="stats-label">Meshes:</span>
+                <span className="stats-value">{modelStats.meshes}</span>
+              </div>
+              <div className="stats-row">
+                <span className="stats-label">Vertices:</span>
+                <span className="stats-value">{modelStats.vertices.toLocaleString()}</span>
+              </div>
+              <div className="stats-row">
+                <span className="stats-label">Materials:</span>
+                <span className="stats-value">{modelStats.materials}</span>
+              </div>
+              <div className="stats-row">
+                <span className="stats-label">Triangles:</span>
+                <span className="stats-value">{modelStats.triangles.toLocaleString()}</span>
+              </div>
+              <div className="stats-row">
+                <span className="stats-label">Size:</span>
+                <span className="stats-value">
+                  {modelStats.dimensions.width}×{modelStats.dimensions.height}×{modelStats.dimensions.depth}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="content-group">
           <h3>CONFIGURATION</h3>
