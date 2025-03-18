@@ -343,6 +343,26 @@ body::after {
   pointer-events: none;
 }
 
+.hexagrid {
+  display: flex;
+  /* gap: 4px; */
+  justify-content: space-between;
+}
+
+.hexagon {
+  width: 30px;
+  height: 35px;
+  background-color: transparent;
+  position: relative;
+  border: 1px solid #00ffff;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  transition: all 0.3s ease;
+}
+
+.hexagon.active {
+  background-color: rgba(0, 255, 255, 0.3);
+}
+
 @keyframes scanline {
   0% {
     background-position: 0 0;

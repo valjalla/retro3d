@@ -474,6 +474,7 @@ export default function ModelViewer() {
         {modelStats && (
           <div className="content-group">
             <h3>OBJECT ANALYSIS</h3>
+            <HEXAgrid />
             <div className="stats-table">
               <div className="stats-row">
                 <span className="stats-label">File:</span>
@@ -598,6 +599,34 @@ function XEnoScript() {
         >
           {char}
         </div>
+      ))}
+    </div>
+  );
+}
+
+export function HEXAgrid() {
+  const [activeHexagons, setActiveHexagons] = useState([true, false, true, false, true]);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setActiveHexagons((prev) => {
+        const newActiveHexagons = [...prev];
+        const randomIndex = Math.floor(Math.random() * newActiveHexagons.length);
+        newActiveHexagons[randomIndex] = !newActiveHexagons[randomIndex];
+        return newActiveHexagons;
+      });
+    }, 2000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
+  return (
+    <div className="hexagrid">
+      {activeHexagons.map((isActive, index) => (
+        <div
+          key={index}
+          className={`hexagon ${isActive ? "active" : ""}`}
+        ></div>
       ))}
     </div>
   );
