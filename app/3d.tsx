@@ -508,6 +508,9 @@ export default function ModelViewer() {
 
         <div className="content-group">
           <h3>CONFIGURATION</h3>
+          <div className="status-bar">
+            <div className="status-fill"></div>
+          </div>
           <label
             htmlFor="model-upload"
             className="animate-warning-blink"
