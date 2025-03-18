@@ -1,3 +1,5 @@
+// todo: add uv checking for glb models
+
 "use client";
 
 import React, { useRef, useState, useEffect, useCallback, useMemo } from "react";
@@ -114,7 +116,7 @@ export default function ModelViewer() {
   };
 
   const loadModel = useCallback(
-    (url: string) => {
+    (url: string, fileName: string) => {
       if (!sceneRef.current || !cameraRef.current || !controlsRef.current) {
         console.error("Required refs are null");
         return;
@@ -159,7 +161,7 @@ export default function ModelViewer() {
           modelRef.current = model;
           setModelLoaded(true);
 
-          const fileName = url.startsWith("blob:") ? "Uploaded Model" : url.split("/").pop() || "Unknown Model";
+          // const fileName = url.startsWith("blob:") ? "Uploaded Model" : url.split("/").pop() || "Unknown Model";
           const stats = calculateModelStats(model, fileName);
           setModelStats(stats);
 
@@ -344,7 +346,7 @@ export default function ModelViewer() {
 
     // load default model when component mounts
     if (LOAD_INIT_MODEL) {
-      loadModel(DEFAULT_MODEL);
+      loadModel(DEFAULT_MODEL, DEFAULT_MODEL.split("/").pop() || "Unknown Model");
     }
 
     return () => {
@@ -364,27 +366,18 @@ export default function ModelViewer() {
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!event.target.files?.[0]) return;
-
+    
     const file = event.target.files[0];
     if (!file) return;
 
     const url = URL.createObjectURL(file);
-    loadModel(url);
+    loadModel(url, file.name);
   };
 
-  const setSpiderMode = () => {
-    const newMode = viewMode === "spider" ? "normal" : "spider";
-    setViewMode(newMode);
+  const setMaterialMode = (mode: "normal" | "spider" | "holo") => {
+    setViewMode(mode);
     if (modelRef.current) {
-      applyMaterialMode(modelRef.current, newMode);
-    }
-  };
-
-  const setHoloMode = () => {
-    const newMode = viewMode === "holo" ? "normal" : "holo";
-    setViewMode(newMode);
-    if (modelRef.current) {
-      applyMaterialMode(modelRef.current, newMode);
+      applyMaterialMode(modelRef.current, mode);
     }
   };
 
@@ -525,15 +518,24 @@ export default function ModelViewer() {
           />
           <div id="interface-mode-buttons">
             <BuTTon
-              primaryText={viewMode === "holo" ? "ノーマル" : "ホログラム"}
-              secondaryText={viewMode === "holo" ? "Normal View" : "Holo View"}
-              onClick={setHoloMode}
+              primaryText="ノーマル"
+              secondaryText="Normal View"
+              onClick={() => setMaterialMode("normal")}
+              active={viewMode === "normal"}
               disabled={!modelLoaded}
             />
             <BuTTon
-              primaryText={viewMode === "spider" ? "ノーマル" : "スパイダー"}
-              secondaryText={viewMode === "spider" ? "Normal View" : "Spider View"}
-              onClick={setSpiderMode}
+              primaryText="ホログラム"
+              secondaryText="Holo View"
+              onClick={() => setMaterialMode("holo")}
+              active={viewMode === "holo"}
+              disabled={!modelLoaded}
+            />
+            <BuTTon
+              primaryText="スパイダー"
+              secondaryText="Spider View"
+              onClick={() => setMaterialMode("spider")}
+              active={viewMode === "spider"}
               disabled={!modelLoaded}
             />
           </div>
@@ -548,19 +550,21 @@ function BuTTon({
   secondaryText,
   onClick,
   disabled = false,
+  active = false,
   className = "",
 }: {
   primaryText: string;
   secondaryText: string;
   onClick: () => void;
   disabled?: boolean;
+  active?: boolean;
   className?: string;
 }) {
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`model-viewer-button ${className}`}
+      className={`model-viewer-button ${active ? 'active' : ''} ${className}`}
     >
       <div className="button-content">
         <span className="button-primary-text">{primaryText}</span>
