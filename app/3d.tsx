@@ -83,8 +83,8 @@ export default function ModelViewer() {
           }
         }
 
-        if (child.geometry) {
-          const geometry = child.geometry;
+        if ((child as any).geometry) {
+          const geometry = (child as THREE.Mesh).geometry;
           if (geometry.index !== null) {
             triangles += geometry.index.count / 3;
           } else if (geometry.attributes.position) {
