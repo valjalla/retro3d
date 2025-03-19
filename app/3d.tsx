@@ -162,9 +162,7 @@ export default function ModelViewer() {
           modelRef.current = model;
           setModelLoaded(true);
 
-          // const fileName = url.startsWith("blob:") ? "Uploaded Model" : url.split("/").pop() || "Unknown Model";
           const stats = calculateModelStats(model, fileName);
-          // const stats = calculateModelStats(model, "millennium_falcon_aeroship.glb");
           setModelStats(stats);
 
           applyMaterialMode(model, viewMode);
