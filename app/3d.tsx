@@ -17,6 +17,9 @@ const SCALE_CAMERA = false,
   DEFAULT_MATERIAL_MODE = "holo",
   ANIMATE_PLATFORM_OPACITY = false,
   USE_COLOR_INTENSITY = false,
+  RING_DIAMETERS = [0.9, 1.2, 1.5],
+  RING_THICKNESS = [0.004, 0.008, 0.012],
+  RING_OPACITIES = [0.35, 0.35, 0.4],
   COLORS_NEON_GEN_BLUE = {
     base: 0x00ffff,
     darkBase: 0x00ccff,
@@ -163,68 +166,12 @@ export default function ModelViewer() {
     platform.position.y = -0.01; // slightly below origin to avoid z-fighting
     scene.add(platform);
 
-    const diameters = [0.9, 1.2, 1.5];
-    const ringThickness = [0.004, 0.008, 0.012];
-    const opacities = [0.35, 0.35, 0.4];
+    // setup rings on scene
+    const rings = createPlatformRings(RING_DIAMETERS, RING_THICKNESS, RING_OPACITIES) as THREE.Object3D[];
+    rings.forEach((ring) => scene.add(ring));
 
-    diameters.forEach((diameter, idx) => {
-      const ringGeometry = new THREE.RingGeometry(
-        diameter - ringThickness[idx] / 2, // inner radius
-        diameter + ringThickness[idx] / 2, // outer radius (inner + thickness)
-        128 // theta segments (roundness of the ring)
-      );
-
-      const ringMaterial = new THREE.MeshBasicMaterial({
-        color: COLORS_ORANGE.darkBase,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: opacities[idx],
-      });
-
-      const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-      ring.rotation.x = -Math.PI / 2;
-      ring.position.y = 0; // position right at platform level
-      scene.add(ring);
-    });
-
-    // crosshair cross
-    const createCross = () => {
-      const outerRingSize = diameters[diameters.length - 1];
-      const crossSize = outerRingSize * 1;
-      const CROSS_OPACITY = 0.6;
-      const lineThickness = 0.01;
-
-      const horizontalGeometry = new THREE.BoxGeometry(crossSize * 2, 0, lineThickness);
-      const horizontalLine = new THREE.Mesh(
-        horizontalGeometry,
-        new THREE.MeshBasicMaterial({
-          color: COLORS_ORANGE.darkBase,
-          transparent: true,
-          opacity: CROSS_OPACITY,
-        })
-      );
-
-      const verticalGeometry = new THREE.BoxGeometry(lineThickness, 0, crossSize * 2);
-      const verticalLine = new THREE.Mesh(
-        verticalGeometry,
-        new THREE.MeshBasicMaterial({
-          color: COLORS_ORANGE.darkBase,
-          transparent: true,
-          opacity: CROSS_OPACITY,
-        })
-      );
-
-      const crossGroup = new THREE.Group();
-      crossGroup.add(horizontalLine);
-      crossGroup.add(verticalLine);
-
-      // position at platform level (a bit on top of rings to avoid z-fighting)
-      crossGroup.position.y = 0.0001;
-
-      return crossGroup;
-    };
-
-    scene.add(createCross());
+    // setup cross on scene
+    scene.add(createCross(RING_DIAMETERS));
 
     const handleResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
@@ -503,4 +450,66 @@ function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>, loadModelC
 
   const url = URL.createObjectURL(file);
   loadModelCallback(url, file.name);
+}
+
+function createPlatformRings(diameters: number[], ringThickness: number[], opacities: number[]): THREE.Mesh[] {
+  const rings: THREE.Mesh[] = [];
+
+  diameters.forEach((diameter, idx) => {
+    const ringGeometry = new THREE.RingGeometry(
+      diameter - ringThickness[idx] / 2, // inner radius
+      diameter + ringThickness[idx] / 2, // outer radius (inner + thickness)
+      128 // theta segments (roundness of the ring)
+    );
+
+    const ringMaterial = new THREE.MeshBasicMaterial({
+      color: COLORS_ORANGE.darkBase,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: opacities[idx],
+    });
+
+    const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = 0; // position right at platform level
+    rings.push(ring);
+  });
+
+  return rings;
+}
+
+function createCross(diameters: number[]) {
+  const outerRingSize = diameters[diameters.length - 1];
+  const crossSize = outerRingSize * 1;
+  const CROSS_OPACITY = 0.6;
+  const lineThickness = 0.01;
+
+  const horizontalGeometry = new THREE.BoxGeometry(crossSize * 2, 0, lineThickness);
+  const horizontalLine = new THREE.Mesh(
+    horizontalGeometry,
+    new THREE.MeshBasicMaterial({
+      color: COLORS_ORANGE.darkBase,
+      transparent: true,
+      opacity: CROSS_OPACITY,
+    })
+  );
+
+  const verticalGeometry = new THREE.BoxGeometry(lineThickness, 0, crossSize * 2);
+  const verticalLine = new THREE.Mesh(
+    verticalGeometry,
+    new THREE.MeshBasicMaterial({
+      color: COLORS_ORANGE.darkBase,
+      transparent: true,
+      opacity: CROSS_OPACITY,
+    })
+  );
+
+  const crossGroup = new THREE.Group();
+  crossGroup.add(horizontalLine);
+  crossGroup.add(verticalLine);
+
+  // position at platform level (a bit on top of rings to avoid z-fighting)
+  crossGroup.position.y = 0.0001;
+
+  return crossGroup;
 }
