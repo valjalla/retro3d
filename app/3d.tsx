@@ -453,10 +453,7 @@ export default function ModelViewer() {
 
   return (
     <div className="model-viewer">
-      <div
-        ref={mountRef}
-        id="interface-plane"
-      />
+      <div ref={mountRef} id="interface-plane" />
       <XEnoScript />
       <div className="grid-lines" />
       <div id="interface-panel">
@@ -465,60 +462,41 @@ export default function ModelViewer() {
           <p>Upload a GLB model to view it in 3D. You can also switch between NOrmal, SPider, and HOlographic modes.</p>
         </div>
 
-        {modelStats && (
-          <div className="content-group">
-            <h3>OBJECT ANALYSIS</h3>
-            <HEXAgrid />
-            <div className="stats-table">
-              <div className="stats-row">
-                <span className="stats-label">File:</span>
-                <span className="stats-value stats-value-filename animate-blink">
-                  <ScrollTXsT text={modelStats.fileName} />
-                </span>
-              </div>
-              <div className="stats-row">
-                <span className="stats-label">Meshes:</span>
-                <span className="stats-value">{modelStats.meshes.toString()}</span>
-              </div>
-              <div className="stats-row">
-                <span className="stats-label">Vertices:</span>
-                <span className="stats-value">{modelStats.vertices.toLocaleString()}</span>
-              </div>
-              <div className="stats-row">
-                <span className="stats-label">Materials:</span>
-                <span className="stats-value">{modelStats.materials.toString()}</span>
-              </div>
-              <div className="stats-row">
-                <span className="stats-label">Triangles:</span>
-                <span className="stats-value">{modelStats.triangles.toLocaleString()}</span>
-              </div>
-              <div className="stats-row">
-                <span className="stats-label">Size:</span>
-                <span className="stats-value">
-                  {`${modelStats.dimensions.width}×${modelStats.dimensions.height}×${modelStats.dimensions.depth}`}
-                </span>
-              </div>
+        <div className="content-group">
+          <h3>OBJECT ANALYSIS</h3>
+          <HEXAgrid />
+          <div className="stats-table">
+            <div className="stats-row">
+              <span className="stats-label">File:</span>
+              <span className="stats-value stats-value-filename animate-blink">
+                {modelStats ? <ScrollTXsT text={modelStats.fileName} /> : <ScrollTXsT text="--" />}
+              </span>
             </div>
+
+            <ROw label="Meshes" value={modelStats?.meshes.toString()} />
+            <ROw label="Vertices" value={modelStats?.vertices.toLocaleString()} />
+            <ROw label="Materials" value={modelStats?.materials.toString()} />
+            <ROw label="Triangles" value={modelStats?.triangles.toLocaleString()} />
+            <ROw
+              label="Size"
+              value={
+                modelStats
+                  ? `${modelStats.dimensions.width}×${modelStats.dimensions.height}×${modelStats.dimensions.depth}`
+                  : undefined
+              }
+            />
           </div>
-        )}
+        </div>
 
         <div className="content-group">
           <h3>CONFIGURATION</h3>
           <div className="status-bar">
             <div className="status-fill"></div>
           </div>
-          <label
-            htmlFor="model-upload"
-            className="animate-warning-blink"
-          >
+          <label htmlFor="model-upload" className="animate-warning-blink">
             情報作成 Upload GLB Model
           </label>
-          <input
-            id="model-upload"
-            type="file"
-            accept=".glb"
-            onChange={handleFileUpload}
-          />
+          <input id="model-upload" type="file" accept=".glb" onChange={handleFileUpload} />
           <div id="interface-mode-buttons">
             <BuTTon
               primaryText="ノーマル"
@@ -548,6 +526,15 @@ export default function ModelViewer() {
   );
 }
 
+function ROw({ label, value }: { label: string; value?: string }) {
+  return (
+    <div className="stats-row">
+      <span className="stats-label">{label}:</span>
+      <span className="stats-value">{value || "--"}</span>
+    </div>
+  );
+}
+
 function BuTTon({
   primaryText,
   secondaryText,
@@ -564,11 +551,7 @@ function BuTTon({
   className?: string;
 }) {
   return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`model-viewer-button ${active ? "active" : ""} ${className}`}
-    >
+    <button onClick={onClick} disabled={disabled} className={`model-viewer-button ${active ? "active" : ""} ${className}`}>
       <div className="button-content">
         <span className="button-primary-text">{primaryText}</span>
         <span className="button-secondary-text">{secondaryText}</span>
@@ -633,10 +616,7 @@ function HEXAgrid() {
   return (
     <div className="hexagrid">
       {activeHexagons.map((isActive, index) => (
-        <div
-          key={index}
-          className={`hexagon ${isActive ? "active" : ""}`}
-        ></div>
+        <div key={index} className={`hexagon ${isActive ? "active" : ""}`}></div>
       ))}
     </div>
   );
@@ -664,12 +644,12 @@ function ScrollTXsT({ text }: { text: string }) {
     const overflowAmount = textWidth - containerWidth;
     const extraPadding = 10;
     const totalScrollDistance = overflowAmount + extraPadding;
-    
+
     const speed = 10;
     const pauseDuration = 1.2;
     const moveDuration = totalScrollDistance / speed;
     const cycleTime = 2 * (moveDuration + pauseDuration);
-    
+
     let startTime = performance.now();
     let animationFrameId: number;
 
@@ -677,10 +657,10 @@ function ScrollTXsT({ text }: { text: string }) {
       const currentTime = performance.now();
       const elapsedSeconds = (currentTime - startTime) / 1000;
       const normalizedTime = (elapsedSeconds % cycleTime) / cycleTime;
-      
+
       let translateX = 0;
       const pauseRatio = pauseDuration / (moveDuration + pauseDuration);
-      
+
       if (normalizedTime < pauseRatio) {
         translateX = 0;
       } else if (normalizedTime < 0.5) {
@@ -725,4 +705,4 @@ function ScrollTXsT({ text }: { text: string }) {
       </span>
     </div>
   );
-};
+}
