@@ -373,7 +373,7 @@ function calculateModelStats(model: THREE.Group, fileName: string): ModelStats {
   };
 }
 
-function applyMaterialMode(model: THREE.Group, mode: MaterialMode) {
+function applyMaterialMode(model: THREE.Group, mode: MaterialMode): void {
   model.traverse((child) => {
     if (child.isMesh && child.material) {
       if (mode !== "normal" && !child.userData.originalMaterial) {
@@ -426,7 +426,7 @@ function applyMaterialMode(model: THREE.Group, mode: MaterialMode) {
   });
 }
 
-function updateHolographicEffect(model: THREE.Group) {
+function updateHolographicEffect(model: THREE.Group): void {
   model.traverse((child) => {
     // only animate opacity for parts marked for animation
     if (child.isMesh && child.material instanceof THREE.MeshStandardMaterial && child.userData.animateOpacity) {
@@ -442,7 +442,7 @@ function updateHolographicEffect(model: THREE.Group) {
   });
 }
 
-function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>, loadModelCallback: Function) {
+function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>, loadModelCallback: Function): void {
   if (!event.target.files?.[0]) return;
 
   const file = event.target.files[0];
@@ -478,7 +478,7 @@ function createPlatformRings(diameters: number[], ringThickness: number[], opaci
   return rings;
 }
 
-function createCross(diameters: number[]) {
+function createCross(diameters: number[]): THREE.Group<THREE.Object3DEventMap> {
   const outerRingSize = diameters[diameters.length - 1];
   const crossSize = outerRingSize * 1;
   const CROSS_OPACITY = 0.6;
