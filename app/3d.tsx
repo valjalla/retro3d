@@ -163,6 +163,7 @@ export default function ModelViewer() {
 
           // const fileName = url.startsWith("blob:") ? "Uploaded Model" : url.split("/").pop() || "Unknown Model";
           const stats = calculateModelStats(model, fileName);
+          // const stats = calculateModelStats(model, "millennium_falcon_aeroship.glb");
           setModelStats(stats);
 
           applyMaterialMode(model, viewMode);
@@ -366,7 +367,7 @@ export default function ModelViewer() {
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!event.target.files?.[0]) return;
-    
+
     const file = event.target.files[0];
     if (!file) return;
 
@@ -471,7 +472,9 @@ export default function ModelViewer() {
             <div className="stats-table">
               <div className="stats-row">
                 <span className="stats-label">File:</span>
-                <span className="stats-value animate-blink">{modelStats.fileName}</span>
+                <span className="stats-value stats-value-filename animate-blink">
+                  <ScrollTXsT text={modelStats.fileName} />
+                </span>
               </div>
               <div className="stats-row">
                 <span className="stats-label">Meshes:</span>
@@ -564,7 +567,7 @@ function BuTTon({
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`model-viewer-button ${active ? 'active' : ''} ${className}`}
+      className={`model-viewer-button ${active ? "active" : ""} ${className}`}
     >
       <div className="button-content">
         <span className="button-primary-text">{primaryText}</span>
@@ -611,7 +614,7 @@ function XEnoScript() {
   );
 }
 
-export function HEXAgrid() {
+function HEXAgrid() {
   const [activeHexagons, setActiveHexagons] = useState([true, false, true, false, true]);
 
   useEffect(() => {
@@ -638,3 +641,88 @@ export function HEXAgrid() {
     </div>
   );
 }
+
+function ScrollTXsT({ text }: { text: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const textElement = textRef.current;
+    if (!container || !textElement) return;
+
+    const ROUNDING_BUFFER = 2;
+    const textWidth = textElement.scrollWidth - 10;
+    const containerWidth = container.clientWidth;
+    const hasOverflow = textWidth > containerWidth + ROUNDING_BUFFER;
+
+    if (!hasOverflow) {
+      textElement.style.transform = "translateX(0)";
+      return;
+    }
+
+    const overflowAmount = textWidth - containerWidth;
+    const extraPadding = 10;
+    const totalScrollDistance = overflowAmount + extraPadding;
+    
+    const speed = 10;
+    const pauseDuration = 1.2;
+    const moveDuration = totalScrollDistance / speed;
+    const cycleTime = 2 * (moveDuration + pauseDuration);
+    
+    let startTime = performance.now();
+    let animationFrameId: number;
+
+    const animate = () => {
+      const currentTime = performance.now();
+      const elapsedSeconds = (currentTime - startTime) / 1000;
+      const normalizedTime = (elapsedSeconds % cycleTime) / cycleTime;
+      
+      let translateX = 0;
+      const pauseRatio = pauseDuration / (moveDuration + pauseDuration);
+      
+      if (normalizedTime < pauseRatio) {
+        translateX = 0;
+      } else if (normalizedTime < 0.5) {
+        const movePhase = (normalizedTime - pauseRatio) / (0.5 - pauseRatio);
+        translateX = -totalScrollDistance * movePhase;
+      } else if (normalizedTime < 0.5 + pauseRatio) {
+        translateX = -totalScrollDistance;
+      } else {
+        const movePhase = (normalizedTime - (0.5 + pauseRatio)) / (0.5 - pauseRatio);
+        translateX = -totalScrollDistance + totalScrollDistance * movePhase;
+      }
+
+      textElement.style.transform = `translateX(${translateX}px)`;
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animationFrameId = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [text]);
+
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        width: "200px",
+        overflow: "hidden",
+      }}
+    >
+      <span
+        ref={textRef}
+        style={{
+          whiteSpace: "nowrap",
+          display: "inline-block",
+        }}
+      >
+        {text}
+      </span>
+    </div>
+  );
+};
