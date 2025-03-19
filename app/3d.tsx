@@ -2,11 +2,12 @@
 
 "use client";
 
-import React, { useRef, useState, useEffect, useCallback, useMemo } from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { ROw, BuTTon, XEnoScript, HEXAgrid, ScrollTXsT } from "./helpers";
+import type { ModelStats } from "./types";
 
 const SCALE_CAMERA = false,
   PLATFORM_RADIUS = 2,
@@ -15,43 +16,23 @@ const SCALE_CAMERA = false,
   DEFAULT_MODEL = "/models/millennium_falcon.glb",
   DEFAULT_MATERIAL_MODE = "holo",
   ANIMATE_PLATFORM_OPACITY = false,
-  USE_COLOR_INTENSITY = false;
-
-const COLORS_NEON_GEN_BLUE = {
-  base: 0x00ffff,
-  darkBase: 0x00ccff,
-  emissive: 0x00ffce,
-  specular: 0x00ffce,
-};
-
-const COLORS_ORANGE = {
-  base: 0xff8c00,
-  darkBase: 0xff4800,
-  emissive: 0x800000,
-  specular: 0xff9900,
-};
+  USE_COLOR_INTENSITY = false,
+  COLORS_NEON_GEN_BLUE = {
+    base: 0x00ffff,
+    darkBase: 0x00ccff,
+    emissive: 0x00ffce,
+    specular: 0x00ffce,
+  },
+  COLORS_ORANGE = {
+    base: 0xff8c00,
+    darkBase: 0xff4800,
+    emissive: 0x800000,
+    specular: 0xff9900,
+  };
 
 const COLORS = COLORS_NEON_GEN_BLUE;
 
-declare module "three" {
-  interface Object3D {
-    isMesh?: boolean;
-    material?: THREE.Material;
-  }
-}
-
-interface ModelStats {
-  vertices: number;
-  triangles: number;
-  meshes: number;
-  materials: number;
-  dimensions: {
-    width: number;
-    height: number;
-    depth: number;
-  };
-  fileName: string;
-}
+type MaterialMode = "normal" | "spider" | "holo";
 
 export default function ModelViewer() {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -65,56 +46,6 @@ export default function ModelViewer() {
   const modelRef = useRef<THREE.Group<THREE.Object3DEventMap>>(null);
   const animationRef = useRef<number>(null);
   const timeRef = useRef<number>(0);
-
-  const calculateModelStats = (model: THREE.Group, fileName: string): ModelStats => {
-    let vertices = 0;
-    let triangles = 0;
-    let meshCount = 0;
-    const materials = new Set();
-
-    model.traverse((child) => {
-      if (child.isMesh) {
-        meshCount++;
-
-        if (child.material) {
-          if (Array.isArray(child.material)) {
-            child.material.forEach((mat) => materials.add(mat));
-          } else {
-            materials.add(child.material);
-          }
-        }
-
-        if ((child as any).geometry) {
-          const geometry = (child as THREE.Mesh).geometry;
-          if (geometry.index !== null) {
-            triangles += geometry.index.count / 3;
-          } else if (geometry.attributes.position) {
-            triangles += geometry.attributes.position.count / 3;
-          }
-
-          if (geometry.attributes.position) {
-            vertices += geometry.attributes.position.count;
-          }
-        }
-      }
-    });
-
-    const box = new THREE.Box3().setFromObject(model);
-    const size = box.getSize(new THREE.Vector3());
-
-    return {
-      vertices,
-      triangles: Math.floor(triangles),
-      meshes: meshCount,
-      materials: materials.size,
-      dimensions: {
-        width: parseFloat(size.x.toFixed(2)),
-        height: parseFloat(size.y.toFixed(2)),
-        depth: parseFloat(size.z.toFixed(2)),
-      },
-      fileName: fileName || "Unknown Model",
-    };
-  };
 
   const loadModel = useCallback(
     (url: string, fileName: string) => {
@@ -293,8 +224,7 @@ export default function ModelViewer() {
       return crossGroup;
     };
 
-    const cross = createCross();
-    scene.add(cross);
+    scene.add(createCross());
 
     const handleResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
@@ -309,7 +239,7 @@ export default function ModelViewer() {
       controls.update();
       timeRef.current += 0.01;
       if (modelRef.current) {
-        updateHolographicEffect(modelRef.current, timeRef.current);
+        updateHolographicEffect(modelRef.current);
       }
 
       if (Math.random() > 0.98) {
@@ -364,90 +294,11 @@ export default function ModelViewer() {
     };
   }, []);
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!event.target.files?.[0]) return;
-
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const url = URL.createObjectURL(file);
-    loadModel(url, file.name);
-  };
-
-  const setMaterialMode = (mode: "normal" | "spider" | "holo") => {
+  const setMaterialMode = (mode: MaterialMode) => {
     setViewMode(mode);
     if (modelRef.current) {
       applyMaterialMode(modelRef.current, mode);
     }
-  };
-
-  const applyMaterialMode = (model: THREE.Group, mode: "normal" | "spider" | "holo") => {
-    model.traverse((child) => {
-      if (child.isMesh && child.material) {
-        if (mode !== "normal" && !child.userData.originalMaterial) {
-          child.userData.originalMaterial = child.material.clone();
-        }
-
-        if (mode === "spider") {
-          const spiderMaterial = new THREE.MeshPhongMaterial({
-            color: COLORS.base,
-            emissive: COLORS.emissive,
-            specular: COLORS.specular,
-            shininess: 30,
-            wireframe: true,
-            transparent: true,
-            opacity: 0.7,
-            flatShading: true,
-          });
-          child.material = spiderMaterial;
-        } else if (mode === "holo") {
-          const originalColor = (child.material as THREE.MeshStandardMaterial)?.color || new THREE.Color(0xffffff);
-          const colorIntensity = (originalColor.r + originalColor.g + originalColor.b) / 3;
-          let baseOpacity = 0.5;
-          if (USE_COLOR_INTENSITY) {
-            // use color intensity to determine opacity
-            baseOpacity = Math.max(0.3, Math.min(0.8, colorIntensity));
-          }
-
-          const holoMaterial = new THREE.MeshStandardMaterial({
-            color: COLORS.base,
-            emissive: COLORS.emissive,
-            roughness: 0.2,
-            metalness: 0.8,
-            transparent: true,
-            opacity: baseOpacity,
-          });
-
-          // use size and position to mark important parts for animation
-          const bbox = new THREE.Box3().setFromObject(child);
-          const size = bbox.getSize(new THREE.Vector3());
-          const volume = size.x * size.y * size.z;
-          const VOLUME_THRESHOLD = 0.2;
-          const isSignificantPart = volume > VOLUME_THRESHOLD;
-          child.userData.animateOpacity = isSignificantPart;
-
-          child.material = holoMaterial;
-        } else if (mode === "normal" && child.userData.originalMaterial) {
-          child.material = child.userData.originalMaterial;
-        }
-      }
-    });
-  };
-
-  const updateHolographicEffect = (model: THREE.Group, time: number) => {
-    model.traverse((child) => {
-      // only animate opacity for parts marked for animation
-      if (child.isMesh && child.material instanceof THREE.MeshStandardMaterial && child.userData.animateOpacity) {
-        const material = child.material;
-        const baseOpacity = 0.6;
-
-        if (Math.random() > 0.97) {
-          const opacityVariation = 0.1;
-          const randomFactor = Math.random() * opacityVariation - opacityVariation / 2;
-          material.opacity = baseOpacity + randomFactor;
-        }
-      }
-    });
   };
 
   return (
@@ -495,7 +346,7 @@ export default function ModelViewer() {
           <label htmlFor="model-upload" className="animate-warning-blink">
             情報作成 Upload GLB Model
           </label>
-          <input id="model-upload" type="file" accept=".glb" onChange={handleFileUpload} />
+          <input id="model-upload" type="file" accept=".glb" onChange={(e) => handleFileUpload(e, loadModel)} />
           <div id="interface-mode-buttons">
             <BuTTon
               primaryText="ノーマル"
@@ -523,4 +374,133 @@ export default function ModelViewer() {
       </div>
     </div>
   );
+}
+
+function calculateModelStats(model: THREE.Group, fileName: string): ModelStats {
+  let vertices = 0;
+  let triangles = 0;
+  let meshCount = 0;
+  const materials = new Set();
+
+  model.traverse((child) => {
+    if (child.isMesh) {
+      meshCount++;
+
+      if (child.material) {
+        if (Array.isArray(child.material)) {
+          child.material.forEach((mat) => materials.add(mat));
+        } else {
+          materials.add(child.material);
+        }
+      }
+
+      if ((child as any).geometry) {
+        const geometry = (child as THREE.Mesh).geometry;
+        if (geometry.index !== null) {
+          triangles += geometry.index.count / 3;
+        } else if (geometry.attributes.position) {
+          triangles += geometry.attributes.position.count / 3;
+        }
+
+        if (geometry.attributes.position) {
+          vertices += geometry.attributes.position.count;
+        }
+      }
+    }
+  });
+
+  const box = new THREE.Box3().setFromObject(model);
+  const size = box.getSize(new THREE.Vector3());
+
+  return {
+    fileName,
+    vertices,
+    triangles: Math.floor(triangles),
+    meshes: meshCount,
+    materials: materials.size,
+    dimensions: {
+      width: parseFloat(size.x.toFixed(2)),
+      height: parseFloat(size.y.toFixed(2)),
+      depth: parseFloat(size.z.toFixed(2)),
+    },
+  };
+}
+
+function applyMaterialMode(model: THREE.Group, mode: MaterialMode) {
+  model.traverse((child) => {
+    if (child.isMesh && child.material) {
+      if (mode !== "normal" && !child.userData.originalMaterial) {
+        child.userData.originalMaterial = child.material.clone();
+      }
+
+      if (mode === "spider") {
+        const spiderMaterial = new THREE.MeshPhongMaterial({
+          color: COLORS.base,
+          emissive: COLORS.emissive,
+          specular: COLORS.specular,
+          shininess: 30,
+          wireframe: true,
+          transparent: true,
+          opacity: 0.7,
+          flatShading: true,
+        });
+        child.material = spiderMaterial;
+      } else if (mode === "holo") {
+        const originalColor = (child.material as THREE.MeshStandardMaterial)?.color || new THREE.Color(0xffffff);
+        const colorIntensity = (originalColor.r + originalColor.g + originalColor.b) / 3;
+        let baseOpacity = 0.5;
+        if (USE_COLOR_INTENSITY) {
+          // use color intensity to determine opacity
+          baseOpacity = Math.max(0.3, Math.min(0.8, colorIntensity));
+        }
+
+        const holoMaterial = new THREE.MeshStandardMaterial({
+          color: COLORS.base,
+          emissive: COLORS.emissive,
+          roughness: 0.2,
+          metalness: 0.8,
+          transparent: true,
+          opacity: baseOpacity,
+        });
+
+        // use size and position to mark important parts for animation
+        const bbox = new THREE.Box3().setFromObject(child);
+        const size = bbox.getSize(new THREE.Vector3());
+        const volume = size.x * size.y * size.z;
+        const VOLUME_THRESHOLD = 0.2;
+        const isSignificantPart = volume > VOLUME_THRESHOLD;
+        child.userData.animateOpacity = isSignificantPart;
+
+        child.material = holoMaterial;
+      } else if (mode === "normal" && child.userData.originalMaterial) {
+        child.material = child.userData.originalMaterial;
+      }
+    }
+  });
+}
+
+function updateHolographicEffect(model: THREE.Group) {
+  model.traverse((child) => {
+    // only animate opacity for parts marked for animation
+    if (child.isMesh && child.material instanceof THREE.MeshStandardMaterial && child.userData.animateOpacity) {
+      const material = child.material;
+      const baseOpacity = 0.6;
+
+      if (Math.random() > 0.97) {
+        const opacityVariation = 0.1;
+        const randomFactor = Math.random() * opacityVariation - opacityVariation / 2;
+        material.opacity = baseOpacity + randomFactor;
+      }
+    }
+  });
+}
+
+function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>, loadModelCallback: Function) {
+  if (!event.target.files?.[0]) return;
+
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const url = URL.createObjectURL(file);
+  loadModelCallback(url, file.name);
 }
