@@ -346,6 +346,14 @@ body::after {
   color: var(--azul);
   font-weight: bold;
   text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+.stats-value-filename {
+  max-width: 180px;
 }
 
 .alien-chars {
