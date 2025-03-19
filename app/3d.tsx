@@ -631,7 +631,7 @@ function ScrollTXsT({ text }: { text: string }) {
     const textElement = textRef.current;
     if (!container || !textElement) return;
 
-    const ROUNDING_BUFFER = 2;
+    const ROUNDING_BUFFER = 2
     const textWidth = textElement.scrollWidth - 10;
     const containerWidth = container.clientWidth;
     const hasOverflow = textWidth > containerWidth + ROUNDING_BUFFER;
@@ -641,66 +641,53 @@ function ScrollTXsT({ text }: { text: string }) {
       return;
     }
 
-    const overflowAmount = textWidth - containerWidth;
-    const extraPadding = 10;
-    const totalScrollDistance = overflowAmount + extraPadding;
+    const totalScrollDistance = textWidth - containerWidth + 10;
+    const stepSize = 4;
+    const stepDelay = 200;
+    const pauseDuration = 2000;
 
-    const speed = 10;
-    const pauseDuration = 1.2;
-    const moveDuration = totalScrollDistance / speed;
-    const cycleTime = 2 * (moveDuration + pauseDuration);
+    let position = 0;
+    let direction = -1;
+    let isPaused = true;
+    let pauseTimer: NodeJS.Timeout;
+    let animationTimer: NodeJS.Timeout;
 
-    let startTime = performance.now();
-    let animationFrameId: number;
-
-    const animate = () => {
-      const currentTime = performance.now();
-      const elapsedSeconds = (currentTime - startTime) / 1000;
-      const normalizedTime = (elapsedSeconds % cycleTime) / cycleTime;
-
-      let translateX = 0;
-      const pauseRatio = pauseDuration / (moveDuration + pauseDuration);
-
-      if (normalizedTime < pauseRatio) {
-        translateX = 0;
-      } else if (normalizedTime < 0.5) {
-        const movePhase = (normalizedTime - pauseRatio) / (0.5 - pauseRatio);
-        translateX = -totalScrollDistance * movePhase;
-      } else if (normalizedTime < 0.5 + pauseRatio) {
-        translateX = -totalScrollDistance;
-      } else {
-        const movePhase = (normalizedTime - (0.5 + pauseRatio)) / (0.5 - pauseRatio);
-        translateX = -totalScrollDistance + totalScrollDistance * movePhase;
+    const updatePosition = () => {
+      if (isPaused) {
+        pauseTimer = setTimeout(() => {
+          isPaused = false;
+          updatePosition();
+        }, pauseDuration);
+        return;
       }
 
-      textElement.style.transform = `translateX(${translateX}px)`;
-      animationFrameId = requestAnimationFrame(animate);
+      position += direction * stepSize;
+
+      if (direction === -1 && position <= -totalScrollDistance) {
+        position = -totalScrollDistance;
+        isPaused = true;
+        direction = 1;
+      } else if (direction === 1 && position >= 0) {
+        position = 0;
+        isPaused = true;
+        direction = -1;
+      }
+
+      textElement.style.transform = `translateX(${position}px)`;
+      animationTimer = setTimeout(updatePosition, stepDelay);
     };
 
-    animationFrameId = requestAnimationFrame(animate);
+    updatePosition();
 
     return () => {
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-      }
+      clearTimeout(animationTimer);
+      clearTimeout(pauseTimer);
     };
   }, [text]);
 
   return (
-    <div
-      ref={containerRef}
-      style={{
-        width: "200px",
-        overflow: "hidden",
-      }}
-    >
-      <span
-        ref={textRef}
-        style={{
-          whiteSpace: "nowrap",
-          display: "inline-block",
-        }}
-      >
+    <div ref={containerRef} style={{ width: "200px", overflow: "hidden" }}>
+      <span ref={textRef} style={{ whiteSpace: "nowrap", display: "inline-block" }}>
         {text}
       </span>
     </div>
