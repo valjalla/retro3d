@@ -312,7 +312,7 @@ body::after {
 }
 
 .button-secondary-text {
-  font-size: 0.75rem;
+  font-size: 0.55rem;
   max-width: 100%;
   text-align: center;
   opacity: 0.8;

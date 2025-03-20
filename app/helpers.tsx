@@ -105,7 +105,7 @@ export function ScrollTXsT({ text }: { text: string }) {
     const textElement = textRef.current;
     if (!container || !textElement) return;
 
-    const ROUNDING_BUFFER = 2;
+    const ROUNDING_BUFFER = 2
     const textWidth = textElement.scrollWidth - 10;
     const containerWidth = container.clientWidth;
     const hasOverflow = textWidth > containerWidth + ROUNDING_BUFFER;

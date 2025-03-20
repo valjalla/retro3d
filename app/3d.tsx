@@ -20,6 +20,10 @@ const SCALE_CAMERA = false,
   RING_DIAMETERS = [0.9, 1.2, 1.5],
   RING_THICKNESS = [0.004, 0.008, 0.012],
   RING_OPACITIES = [0.35, 0.35, 0.4],
+  MODEL_ROTATION_ENABLED = true,
+  MODEL_ROTATION_SPEED = 0.05,
+  MODEL_ROTATION_STEP_INTERVAL = 10,
+  MODEL_ROTATION_STEP_SIZE = 0.05,
   COLORS_NEON_GEN_BLUE = {
     base: 0x00ffff,
     darkBase: 0x00ccff,
@@ -49,6 +53,7 @@ export default function ModelViewer() {
   const modelRef = useRef<THREE.Group<THREE.Object3DEventMap>>(null);
   const animationRef = useRef<number>(null);
   const timeRef = useRef<number>(0);
+  const rotationFrameRef = useRef<number>(0);
 
   const loadModel = useCallback(
     (url: string, fileName: string) => {
@@ -185,6 +190,14 @@ export default function ModelViewer() {
       animationRef.current = requestAnimationFrame(animate);
       controls.update();
       timeRef.current += 0.01;
+
+      if (MODEL_ROTATION_ENABLED && modelRef.current) {
+        rotationFrameRef.current += 1;
+        if (rotationFrameRef.current % MODEL_ROTATION_STEP_INTERVAL === 0) {
+          modelRef.current.rotation.y += MODEL_ROTATION_STEP_SIZE * MODEL_ROTATION_SPEED;
+        }
+      }
+
       if (modelRef.current) {
         updateHolographicEffect(modelRef.current);
       }
@@ -256,7 +269,6 @@ export default function ModelViewer() {
       <div id="interface-panel">
         <div className="content-group">
           <h1 id="interface-title">古典 RETRO3D MODEL</h1>
-          <p>Upload a GLB model to view it in 3D. You can also switch between NOrmal, SPider, and HOlographic modes.</p>
         </div>
 
         <div className="content-group">
