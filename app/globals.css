@@ -6,6 +6,8 @@
   --negro: #0a0a0a;
   --azul: #00ffff;
   --naranja: #ff4800;
+  --pera: #ee6d2b;
+
   --gris: #aaaaaa;
   --steel: #364153;
 
@@ -39,14 +41,21 @@ main {
   font-family: var(--font-times);
 }
 
-h1,
-h2,
-h3 {
-  border-bottom: 1px solid var(--naranja);
-  padding-bottom: 0.25rem;
+h1 {
   margin-bottom: 0.25rem;
   margin-top: 0.25rem;
   font-family: var(--font-times);
+  text-align: end;
+}
+
+h2,
+h3 {
+  outline: 1px solid var(--naranja);
+  padding: 0.2rem 0.5rem;
+  margin-bottom: 0.25rem;
+  margin-top: 0.25rem;
+  font-family: var(--font-times);
+  width: fit-content;
 }
 
 h1:hover,
@@ -168,11 +177,24 @@ body::after {
   box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
 }
 
+#interface-name {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  font-size: 1.5rem;
+  color: var(--pera);
+  z-index: 20;
+  margin: 1rem;
+  border: 1px solid var(--pera);
+}
+
 #interface-title {
   font-size: 1.5rem;
   padding-top: 0rem;
   margin-top: 0;
   margin-bottom: 0.2rem;
+  outline: 1px solid var(--);
+  padding: 0.2rem 0.5rem; 
 }
 
 #interface-mode-buttons {

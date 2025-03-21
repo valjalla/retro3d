@@ -266,11 +266,12 @@ export default function ModelViewer() {
       <div ref={mountRef} id="interface-plane" />
       <XEnoScript />
       <div className="grid-lines" />
-      <div id="interface-panel">
-        <div className="content-group">
-          <h1 id="interface-title">古典 RETRO3D MODEL</h1>
-        </div>
 
+      <div id="interface-name">
+        <h1 id="interface-title" className="animate-warning-blink">古典道具 RETRO3D</h1>
+      </div>
+
+      <div id="interface-panel">
         <div className="content-group">
           <h3>OBJECT ANALYSIS</h3>
           <HEXAgrid />
