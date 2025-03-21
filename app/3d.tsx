@@ -60,6 +60,32 @@ export default function ModelViewer() {
   const animationRef = useRef<number>(null);
   const timeRef = useRef<number>(0);
   const rotationFrameRef = useRef<number>(0);
+  const [ticksX, setTicksX] = useState<number[]>([]);
+  const [ticksY, setTicksY] = useState<number[]>([]);
+  const axisContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const calculateTicks = () => {
+      if (!axisContainerRef.current) return;
+
+      const container = axisContainerRef.current;
+      const { width, height } = container.getBoundingClientRect();
+      const TICK_SPACING = 6;
+
+      const numTicksX = Math.floor(width / TICK_SPACING);
+      const numTicksY = Math.floor(height / TICK_SPACING);
+      const xArray = Array.from({ length: numTicksX }, (_, i) => i);
+      const yArray = Array.from({ length: numTicksY }, (_, i) => i);
+
+      setTicksX(xArray);
+      setTicksY(yArray);
+    };
+
+    calculateTicks();
+
+    window.addEventListener("resize", calculateTicks);
+    return () => window.removeEventListener("resize", calculateTicks);
+  }, []);
 
   const loadModel = useCallback(
     (url: string, fileName: string) => {
@@ -273,8 +299,35 @@ export default function ModelViewer() {
       <XEnoScript />
       <div className="grid-lines" />
 
+      <div className="axis-container" ref={axisContainerRef}>
+        <div className="axis x-axis"></div>
+        <div className="axis y-axis"></div>
+
+        {ticksX.map((i) => (
+          <div
+            key={`x-tick-${i}`}
+            className={`tick x-tick ${i % 5 === 0 ? "major-tick" : ""}`}
+            style={{
+              right: `${(i / (ticksX.length - 1)) * 90}%`,
+            }}
+          ></div>
+        ))}
+
+        {ticksY.map((i) => (
+          <div
+            key={`y-tick-${i}`}
+            className={`tick y-tick ${i % 5 === 0 ? "major-tick" : ""}`}
+            style={{
+              bottom: `${(i / (ticksY.length - 1)) * 90}%`,
+            }}
+          ></div>
+        ))}
+      </div>
+
       <div id="interface-name">
-        <h1 id="interface-title" className="animate-warning-blink">古典道具 RETRO3D</h1>
+        <h1 id="interface-title" className="animate-warning-blink">
+          古典道具 REMOD3D
+        </h1>
       </div>
 
       <div id="interface-panel">
