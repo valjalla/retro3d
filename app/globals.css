@@ -6,7 +6,7 @@
   --negro: #0a0a0a;
   --azul: #00ffff;
   --naranja: #ff4800;
-  --pera: #ee6d2b;
+  --aura: #ee6d2b;
 
   --gris: #aaaaaa;
   --steel: #364153;
@@ -182,10 +182,10 @@ body::after {
   top: 20px;
   right: 20px;
   font-size: 1.5rem;
-  color: var(--pera);
+  color: var(--aura);
   z-index: 20;
   margin: 1rem;
-  border: 1px solid var(--pera);
+  border: 1px solid var(--aura);
 }
 
 #interface-title {

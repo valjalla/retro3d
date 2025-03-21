@@ -35,6 +35,12 @@ const SCALE_CAMERA = false,
     darkBase: 0xff4800,
     emissive: 0x800000,
     specular: 0xff9900,
+  },
+  COLORS_AURA = {
+    base: 0xee6d2b,
+    darkBase: 0x8b4513,
+    emissive: 0x8b4513,
+    specular: 0x8b4513,
   };
 
 const COLORS = COLORS_NEON_GEN_BLUE;
