@@ -28,6 +28,10 @@ const SCALE_CAMERA = false,
   MODEL_ROTATION_STEP_INTERVAL = 10,
   MODEL_ROTATION_STEP_SIZE = 0.05,
   SPEED_GAUGE_SEGMENTS = 14,
+  SPEED_SEGMENTS = Array.from(
+    { length: SPEED_GAUGE_SEGMENTS },
+    (_, i) => MODEL_ROTATION_MIN_SPEED + (MODEL_ROTATION_MAX_SPEED - MODEL_ROTATION_MIN_SPEED) * (i / (SPEED_GAUGE_SEGMENTS - 1))
+  ),
   COLORS_NEON_GEN_BLUE = {
     base: 0x00ffff,
     darkBase: 0x00ccff,
@@ -319,12 +323,6 @@ export default function ModelViewer() {
     setModelStats(null);
   }, []);
 
-  const speedSegments = Array.from(
-    { length: SPEED_GAUGE_SEGMENTS },
-    (_, i) =>
-      MODEL_ROTATION_MIN_SPEED + (MODEL_ROTATION_MAX_SPEED - MODEL_ROTATION_MIN_SPEED) * (i / (SPEED_GAUGE_SEGMENTS - 1))
-  );
-
   const handleSpeedSegmentClick = (segmentValue: number) => {
     if (!modelLoaded || !rotationEnabled) return;
     setRotationSpeed(segmentValue);
@@ -441,7 +439,7 @@ export default function ModelViewer() {
             />
             <div className="rotation-speed-control">
               <div className="speed-gauge">
-                {speedSegments.map((segValue, idx) => (
+                {SPEED_SEGMENTS.map((segValue, idx) => (
                   <div
                     key={`segment-${idx}`}
                     className={`speed-gauge-segment ${idx <= getActiveSegmentIndex() ? "active" : ""} ${
