@@ -449,6 +449,7 @@ body::after {
   height: 3px;
   right: 0;
   bottom: 0;
+  box-shadow: 0 0 5px rgba(238, 109, 43, 0.8);
 }
 
 .y-axis {
@@ -456,6 +457,7 @@ body::after {
   height: 90%;
   right: 0;
   bottom: 0;
+  box-shadow: 0 0 5px rgba(238, 109, 43, 0.8);
 }
 
 .tick {
