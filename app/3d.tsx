@@ -6,7 +6,7 @@ import React, { useRef, useState, useEffect, useCallback } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { ROw, BuTTon, XEnoScript, HEXAgrid, ScrollTXsT } from "./helpers";
+import { ROw, BuTTon, XEnoScript, HEXAgrid, ScrollTXsT } from "./ui";
 import type { ModelStats } from "./types";
 
 const SCALE_CAMERA = false,
@@ -53,6 +53,8 @@ export default function ModelViewer() {
   const [viewMode, setViewMode] = useState<"normal" | "spider" | "holo">(DEFAULT_MATERIAL_MODE);
   const [modelLoaded, setModelLoaded] = useState(false);
   const [modelStats, setModelStats] = useState<ModelStats | null>(null);
+  const [rotationEnabled, setRotationEnabled] = useState<boolean>(MODEL_ROTATION_ENABLED);
+  const rotationEnabledRef = useRef<boolean>(MODEL_ROTATION_ENABLED);
   const sceneRef = useRef<THREE.Scene>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera>(null);
   const rendererRef = useRef<THREE.WebGLRenderer>(null);
@@ -64,6 +66,10 @@ export default function ModelViewer() {
   const [ticksX, setTicksX] = useState<number[]>([]);
   const [ticksY, setTicksY] = useState<number[]>([]);
   const axisContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    rotationEnabledRef.current = rotationEnabled;
+  }, [rotationEnabled]);
 
   useEffect(() => {
     const calculateTicks = () => {
@@ -227,7 +233,7 @@ export default function ModelViewer() {
       controls.update();
       timeRef.current += 0.01;
 
-      if (MODEL_ROTATION_ENABLED && modelRef.current) {
+      if (rotationEnabledRef.current && modelRef.current) {
         rotationFrameRef.current += 1;
         if (rotationFrameRef.current % MODEL_ROTATION_STEP_INTERVAL === 0) {
           modelRef.current.rotation.y += MODEL_ROTATION_STEP_SIZE * MODEL_ROTATION_SPEED;
@@ -393,6 +399,14 @@ export default function ModelViewer() {
               disabled={!modelLoaded}
             />
           </div>
+          {/* Added rotation toggle button */}
+          <BuTTon
+            primaryText="回転"
+            secondaryText={rotationEnabled ? "Stop Rotation" : "Start Rotation"}
+            onClick={() => setRotationEnabled(!rotationEnabled)}
+            active={rotationEnabled}
+            disabled={!modelLoaded}
+          />
         </div>
       </div>
     </div>
