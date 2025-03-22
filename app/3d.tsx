@@ -15,6 +15,7 @@ const SCALE_CAMERA = false,
   LOAD_INIT_MODEL = true,
   DEFAULT_MODEL = "/models/millennium_falcon.glb",
   DEFAULT_MATERIAL_MODE = "holo",
+  DEFAULT_MODEL_ORIENTATION = Math.PI / 2.5,
   ANIMATE_PLATFORM_OPACITY = false,
   USE_COLOR_INTENSITY = false,
   RING_DIAMETERS = [0.9, 1.2, 1.5],
@@ -129,6 +130,9 @@ export default function ModelViewer() {
           // align base with platform (y = 0)
           model.position.y -= minY;
 
+          // apply rotation to make model face the camera
+          model.rotation.y = DEFAULT_MODEL_ORIENTATION;
+
           sceneRef.current.add(model);
           modelRef.current = model;
           setModelLoaded(true);
@@ -204,7 +208,7 @@ export default function ModelViewer() {
     scene.add(platform);
 
     // setup rings on scene
-    const rings = createPlatformRings(RING_DIAMETERS, RING_THICKNESS, RING_OPACITIES) as THREE.Object3D[];
+    const rings = createPlatformRings(RING_DIAMETERS, RING_THICKNESS, RING_OPACITIES) as THREE.Mesh[];
     rings.forEach((ring) => scene.add(ring));
 
     // setup cross on scene
@@ -402,7 +406,7 @@ function calculateModelStats(model: THREE.Group, fileName: string): ModelStats {
   const materials = new Set();
 
   model.traverse((child) => {
-    if (child.isMesh) {
+    if (child instanceof THREE.Mesh) {
       meshCount++;
 
       if (child.material) {
@@ -447,7 +451,7 @@ function calculateModelStats(model: THREE.Group, fileName: string): ModelStats {
 
 function applyMaterialMode(model: THREE.Group, mode: MaterialMode): void {
   model.traverse((child) => {
-    if (child.isMesh && child.material) {
+    if (child instanceof THREE.Mesh && child.material) {
       if (mode !== "normal" && !child.userData.originalMaterial) {
         child.userData.originalMaterial = child.material.clone();
       }
@@ -501,7 +505,11 @@ function applyMaterialMode(model: THREE.Group, mode: MaterialMode): void {
 function updateHolographicEffect(model: THREE.Group): void {
   model.traverse((child) => {
     // only animate opacity for parts marked for animation
-    if (child.isMesh && child.material instanceof THREE.MeshStandardMaterial && child.userData.animateOpacity) {
+    if (
+      child instanceof THREE.Mesh &&
+      child.material instanceof THREE.MeshStandardMaterial &&
+      child.userData.animateOpacity
+    ) {
       const material = child.material;
       const baseOpacity = 0.6;
 
