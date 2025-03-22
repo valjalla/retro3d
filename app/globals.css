@@ -97,8 +97,11 @@ label:hover {
   transition: background-color 0.1s ease-in, outline 0.1s ease-in, color 0.1s ease-in;
 }
 
-input {
-  display: none;
+button:disabled:hover,
+label:disabled:hover {
+  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><circle cx='12' cy='12' r='0.75' fill='%23aaaaaa'/><line x1='12' y1='3' x2='12' y2='21' stroke='%23aaaaaa' stroke-width='1.5'/><line x1='3' y1='12' x2='21' y2='12' stroke='%23aaaaaa' stroke-width='1.5'/></svg>")
+      12 12,
+    not-allowed;
 }
 
 button:disabled,
@@ -143,6 +146,10 @@ body::after {
   z-index: 110;
   pointer-events: none;
   animation: flicker 5s infinite;
+}
+
+input {
+  display: none;
 }
 
 ::selection {
@@ -202,6 +209,41 @@ body::after {
   width: 100%;
   display: flex;
   gap: 10px;
+}
+
+#interface-clear-button {
+  position: absolute;
+  bottom: 40px;
+  left: 40px;
+  z-index: 20;
+}
+
+.hexagon-button {
+  width: 85;
+  height: 95px;
+  background-color: rgba(20, 20, 20, 0.5);
+  position: relative;
+  border: 1px solid var(--aura);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  transition: all 0.3s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  background-color: rgba(238, 109, 43, 0.1);
+}
+
+.hexagon-button:hover {
+  background-color: rgba(255, 72, 0, 0.3);
+  outline: 1px solid rgba(255, 72, 0, 0.4);
+  color: var(--naranja);
+  transition: background-color 0.1s ease-in, outline 0.1s ease-in, color 0.1s ease-in;
+}
+
+.hexagon-button:disabled {
+  opacity: 0.5;
+  border-color: var(--gris);
+  background-color: rgba(85, 85, 85, 0.2);
 }
 
 .content-group {

@@ -303,6 +303,16 @@ export default function ModelViewer() {
     }
   };
 
+  const clearModel = useCallback(() => {
+    if (!sceneRef.current || !modelRef.current) return;
+    
+    sceneRef.current.remove(modelRef.current);
+    modelRef.current = null;
+    
+    setModelLoaded(false);
+    setModelStats(null);
+  }, []);
+
   return (
     <div className="model-viewer">
       <div ref={mountRef} id="interface-plane" />
@@ -408,6 +418,18 @@ export default function ModelViewer() {
             disabled={!modelLoaded}
           />
         </div>
+      </div>
+      <div id="interface-clear-button">
+        <button 
+          className="hexagon-button"
+          onClick={clearModel}
+          disabled={!modelLoaded}
+        >
+          <div className="button-content">
+            <span className="button-primary-text">クリア</span>
+            <span className="button-secondary-text">Clear Model</span>
+          </div>
+        </button>
       </div>
     </div>
   );
