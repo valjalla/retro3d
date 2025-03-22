@@ -17,6 +17,16 @@
   --color-foreground: var(--foreground);
   --font-mono: "Courier New", Courier, monospace;
   --font-times: "Times New Roman", Times, serif;
+
+  --prim-cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><circle cx='12' cy='12' r='0.75' fill='%23ff4800'/><line x1='12' y1='3' x2='12' y2='21' stroke='%23ff4800' stroke-width='1.5'/><line x1='3' y1='12' x2='21' y2='12' stroke='%23ff4800' stroke-width='1.5'/></svg>")
+      12 12,
+    crosshair;
+  --second-cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><circle cx='12' cy='12' r='0.75' fill='%2300ffff'/><line x1='12' y1='3' x2='12' y2='21' stroke='%2300ffff' stroke-width='1.5'/><line x1='3' y1='12' x2='21' y2='12' stroke='%2300ffff' stroke-width='1.5'/></svg>")
+      12 12,
+    crosshair;
+  --disabled-cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><circle cx='12' cy='12' r='0.75' fill='%23aaaaaa'/><line x1='12' y1='3' x2='12' y2='21' stroke='%23aaaaaa' stroke-width='1.5'/><line x1='3' y1='12' x2='21' y2='12' stroke='%23aaaaaa' stroke-width='1.5'/></svg>")
+      12 12,
+    not-allowed;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -31,9 +41,7 @@ body {
   color: var(--naranja);
   margin: 0;
   padding: 0;
-  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><circle cx='12' cy='12' r='0.75' fill='%23ff4800'/><line x1='12' y1='3' x2='12' y2='21' stroke='%23ff4800' stroke-width='1.5'/><line x1='3' y1='12' x2='21' y2='12' stroke='%23ff4800' stroke-width='1.5'/></svg>")
-      12 12,
-    crosshair;
+  cursor: var(--prim-cursor);
 }
 
 main {
@@ -88,9 +96,7 @@ label {
 
 button:hover,
 label:hover {
-  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><circle cx='12' cy='12' r='0.75' fill='%2300ffff'/><line x1='12' y1='3' x2='12' y2='21' stroke='%2300ffff' stroke-width='1.5'/><line x1='3' y1='12' x2='21' y2='12' stroke='%2300ffff' stroke-width='1.5'/></svg>")
-      12 12,
-    crosshair;
+  cursor: var(--second-cursor);
   background-color: rgba(255, 72, 0, 0.2);
   outline: 1px solid rgba(255, 72, 0, 0.4);
   color: var(--naranja);
@@ -99,9 +105,7 @@ label:hover {
 
 button:disabled:hover,
 label:disabled:hover {
-  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><circle cx='12' cy='12' r='0.75' fill='%23aaaaaa'/><line x1='12' y1='3' x2='12' y2='21' stroke='%23aaaaaa' stroke-width='1.5'/><line x1='3' y1='12' x2='21' y2='12' stroke='%23aaaaaa' stroke-width='1.5'/></svg>")
-      12 12,
-    not-allowed;
+  cursor: var(--disabled-cursor);
 }
 
 button:disabled,
@@ -202,7 +206,7 @@ input {
   margin-top: 0;
   margin-bottom: 0.2rem;
   outline: 1px solid var(--);
-  padding: 0.2rem 0.5rem; 
+  padding: 0.2rem 0.5rem;
 }
 
 #interface-mode-buttons {
@@ -487,7 +491,7 @@ input {
 }
 
 .x-axis {
-  width: 90%; 
+  width: 90%;
   height: 3px;
   right: 0;
   bottom: 0;
@@ -616,9 +620,7 @@ MARK: speed gauge
 .speed-gauge-segment.active {
   border-color: var(--azul);
   background: rgba(0, 255, 255, 0.15);
-  box-shadow: 
-    0 0 5px rgba(0, 255, 255, 0.3),
-    inset 0 0 8px rgba(0, 255, 255, 0.2);
+  box-shadow: 0 0 5px rgba(0, 255, 255, 0.3), inset 0 0 8px rgba(0, 255, 255, 0.2);
 }
 
 .speed-gauge-segment.active:before {
