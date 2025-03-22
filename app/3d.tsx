@@ -23,8 +23,11 @@ const SCALE_CAMERA = false,
   RING_OPACITIES = [0.35, 0.35, 0.4],
   MODEL_ROTATION_ENABLED = true,
   MODEL_ROTATION_SPEED = 0.05,
+  MODEL_ROTATION_MIN_SPEED = 0.01,
+  MODEL_ROTATION_MAX_SPEED = 1,
   MODEL_ROTATION_STEP_INTERVAL = 10,
   MODEL_ROTATION_STEP_SIZE = 0.05,
+  SPEED_GAUGE_SEGMENTS = 14,
   COLORS_NEON_GEN_BLUE = {
     base: 0x00ffff,
     darkBase: 0x00ccff,
@@ -54,7 +57,9 @@ export default function ModelViewer() {
   const [modelLoaded, setModelLoaded] = useState(false);
   const [modelStats, setModelStats] = useState<ModelStats | null>(null);
   const [rotationEnabled, setRotationEnabled] = useState<boolean>(MODEL_ROTATION_ENABLED);
+  const [rotationSpeed, setRotationSpeed] = useState<number>(MODEL_ROTATION_SPEED);
   const rotationEnabledRef = useRef<boolean>(MODEL_ROTATION_ENABLED);
+  const rotationSpeedRef = useRef<number>(MODEL_ROTATION_SPEED);
   const sceneRef = useRef<THREE.Scene>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera>(null);
   const rendererRef = useRef<THREE.WebGLRenderer>(null);
@@ -69,7 +74,8 @@ export default function ModelViewer() {
 
   useEffect(() => {
     rotationEnabledRef.current = rotationEnabled;
-  }, [rotationEnabled]);
+    rotationSpeedRef.current = rotationSpeed;
+  }, [rotationEnabled, rotationSpeed]);
 
   useEffect(() => {
     const calculateTicks = () => {
@@ -236,7 +242,7 @@ export default function ModelViewer() {
       if (rotationEnabledRef.current && modelRef.current) {
         rotationFrameRef.current += 1;
         if (rotationFrameRef.current % MODEL_ROTATION_STEP_INTERVAL === 0) {
-          modelRef.current.rotation.y += MODEL_ROTATION_STEP_SIZE * MODEL_ROTATION_SPEED;
+          modelRef.current.rotation.y += MODEL_ROTATION_STEP_SIZE * rotationSpeedRef.current;
         }
       }
 
@@ -305,13 +311,29 @@ export default function ModelViewer() {
 
   const clearModel = useCallback(() => {
     if (!sceneRef.current || !modelRef.current) return;
-    
+
     sceneRef.current.remove(modelRef.current);
     modelRef.current = null;
-    
+
     setModelLoaded(false);
     setModelStats(null);
   }, []);
+
+  const speedSegments = Array.from(
+    { length: SPEED_GAUGE_SEGMENTS },
+    (_, i) =>
+      MODEL_ROTATION_MIN_SPEED + (MODEL_ROTATION_MAX_SPEED - MODEL_ROTATION_MIN_SPEED) * (i / (SPEED_GAUGE_SEGMENTS - 1))
+  );
+
+  const handleSpeedSegmentClick = (segmentValue: number) => {
+    if (!modelLoaded || !rotationEnabled) return;
+    setRotationSpeed(segmentValue);
+  };
+
+  const getActiveSegmentIndex = () => {
+    const segmentWidth = (MODEL_ROTATION_MAX_SPEED - MODEL_ROTATION_MIN_SPEED) / (SPEED_GAUGE_SEGMENTS - 1);
+    return Math.round((rotationSpeed - MODEL_ROTATION_MIN_SPEED) / segmentWidth);
+  };
 
   return (
     <div className="model-viewer">
@@ -409,22 +431,34 @@ export default function ModelViewer() {
               disabled={!modelLoaded}
             />
           </div>
-          {/* Added rotation toggle button */}
-          <BuTTon
-            primaryText="回転"
-            secondaryText={rotationEnabled ? "Stop Rotation" : "Start Rotation"}
-            onClick={() => setRotationEnabled(!rotationEnabled)}
-            active={rotationEnabled}
-            disabled={!modelLoaded}
-          />
+          <div className="rotation-controls">
+            <BuTTon
+              primaryText="回転"
+              secondaryText={rotationEnabled ? "Stop Rotation" : "Start Rotation"}
+              onClick={() => setRotationEnabled(!rotationEnabled)}
+              active={rotationEnabled}
+              disabled={!modelLoaded}
+            />
+            <div className="rotation-speed-control">
+              <div className="speed-gauge">
+                {speedSegments.map((segValue, idx) => (
+                  <div
+                    key={`segment-${idx}`}
+                    className={`speed-gauge-segment ${idx <= getActiveSegmentIndex() ? "active" : ""} ${
+                      !modelLoaded || !rotationEnabled ? "disabled" : ""
+                    }`}
+                    onClick={() => handleSpeedSegmentClick(segValue)}
+                    title={`Set speed to ${segValue.toFixed(2)}`}
+                  />
+                ))}
+                <span className="slider-label">速度</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       <div id="interface-clear-button">
-        <button 
-          className="hexagon-button"
-          onClick={clearModel}
-          disabled={!modelLoaded}
-        >
+        <button className="hexagon-button" onClick={clearModel} disabled={!modelLoaded}>
           <div className="button-content">
             <span className="button-primary-text">クリア</span>
             <span className="button-secondary-text">Clear Model</span>
