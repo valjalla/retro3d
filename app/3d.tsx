@@ -23,8 +23,8 @@ const SCALE_CAMERA = false,
   RING_OPACITIES = [0.35, 0.35, 0.4],
   MODEL_ROTATION_ENABLED = true,
   MODEL_ROTATION_SPEED = 0.05,
-  MODEL_ROTATION_MIN_SPEED = 0.01,
-  MODEL_ROTATION_MAX_SPEED = 1,
+  MODEL_ROTATION_MIN_SPEED = 0.09,
+  MODEL_ROTATION_MAX_SPEED = 4.20,
   MODEL_ROTATION_STEP_INTERVAL = 10,
   MODEL_ROTATION_STEP_SIZE = 0.05,
   SPEED_GAUGE_SEGMENTS = 15,
@@ -81,6 +81,8 @@ export default function ModelViewer() {
   const [ticksX, setTicksX] = useState<number[]>([]);
   const [ticksY, setTicksY] = useState<number[]>([]);
   const axisContainerRef = useRef<HTMLDivElement>(null);
+  const speedGaugeRef = useRef<HTMLDivElement>(null);
+  const isDraggingRef = useRef<boolean>(false);
 
   useEffect(() => {
     rotationEnabledRef.current = rotationEnabled;
@@ -339,6 +341,47 @@ export default function ModelViewer() {
     return Math.round((rotationSpeed - MODEL_ROTATION_MIN_SPEED) / segmentWidth);
   };
 
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (!modelLoaded || !rotationEnabled || !speedGaugeRef.current) return;
+      isDraggingRef.current = true;
+      updateSpeedFromMousePosition(e);
+      e.preventDefault();
+    },
+    [modelLoaded, rotationEnabled]
+  );
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDraggingRef.current || !speedGaugeRef.current) return;
+    updateSpeedFromMousePosition(e);
+  }, []);
+
+  const handleMouseUp = useCallback(() => {
+    isDraggingRef.current = false;
+  }, []);
+
+  const updateSpeedFromMousePosition = useCallback((e: MouseEvent | React.MouseEvent) => {
+    if (!speedGaugeRef.current) return;
+
+    const gaugeRect = speedGaugeRef.current.getBoundingClientRect();
+    const relativeX = e.clientX - gaugeRect.left;
+    const percentage = Math.max(0, Math.min(1, relativeX / gaugeRect.width));
+
+    const newSpeed = MODEL_ROTATION_MIN_SPEED + (MODEL_ROTATION_MAX_SPEED - MODEL_ROTATION_MIN_SPEED) * percentage;
+
+    setRotationSpeed(newSpeed);
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [handleMouseMove, handleMouseUp]);
+
   return (
     <div className="model-viewer">
       <div ref={mountRef} id="interface-plane" />
@@ -449,14 +492,13 @@ export default function ModelViewer() {
               className="verde"
             />
             <div className="rotation-speed-control">
-              <div className="speed-gauge">
+              <div className="speed-gauge" ref={speedGaugeRef} onMouseDown={handleMouseDown}>
                 {SPEED_SEGMENTS.map((segValue, idx) => (
                   <div
                     key={`segment-${idx}`}
                     className={`speed-gauge-segment ${idx <= getActiveSegmentIndex() ? "active" : ""} ${
                       !modelLoaded || !rotationEnabled ? "disabled" : ""
                     }`}
-                    onClick={() => handleSpeedSegmentClick(segValue)}
                     title={`Set speed to ${segValue.toFixed(2)}`}
                   />
                 ))}
