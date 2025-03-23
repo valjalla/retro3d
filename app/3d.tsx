@@ -231,7 +231,7 @@ export default function ModelViewer() {
       color: COLORS.base,
       side: THREE.DoubleSide,
       opacity: 0.15,
-      transparent: true,
+      transparent: true
     });
     const platform = new THREE.Mesh(platformGeometry, platformMaterial);
     platform.rotation.x = -Math.PI / 2; // lay flat
@@ -274,7 +274,7 @@ export default function ModelViewer() {
         const lineMaterial = new THREE.LineBasicMaterial({
           color: COLORS.base,
           transparent: true,
-          opacity: 0.1 + Math.random() * 0.5,
+          opacity: 0.1 + Math.random() * 0.5
         });
         const lineGeometry = new THREE.BufferGeometry();
         const positions = new Float32Array(2 * 3);
@@ -404,7 +404,7 @@ export default function ModelViewer() {
             key={`x-tick-${i}`}
             className={`tick x-tick ${i % 5 === 0 ? "major-tick" : ""}`}
             style={{
-              right: `${(i / (ticksX.length - 1)) * 90}%`,
+              right: `${(i / (ticksX.length - 1)) * 90}%`
             }}
           />
         ))}
@@ -414,7 +414,7 @@ export default function ModelViewer() {
             key={`y-tick-${i}`}
             className={`tick y-tick ${i % 5 === 0 ? "major-tick" : ""}`}
             style={{
-              bottom: `${(i / (ticksY.length - 1)) * 90}%`,
+              bottom: `${(i / (ticksY.length - 1)) * 90}%`
             }}
           />
         ))}
@@ -567,8 +567,8 @@ function calculateModelStats(model: THREE.Group, fileName: string): ModelStats {
     dimensions: {
       width: Number.parseFloat(size.x.toFixed(2)),
       height: Number.parseFloat(size.y.toFixed(2)),
-      depth: Number.parseFloat(size.z.toFixed(2)),
-    },
+      depth: Number.parseFloat(size.z.toFixed(2))
+    }
   };
 }
 
@@ -588,7 +588,7 @@ function applyMaterialMode(model: THREE.Group, mode: MaterialMode): void {
           wireframe: true,
           transparent: true,
           opacity: 0.7,
-          flatShading: true,
+          flatShading: true
         });
         child.material = spiderMaterial;
       } else if (mode === "holo") {
@@ -606,7 +606,7 @@ function applyMaterialMode(model: THREE.Group, mode: MaterialMode): void {
           roughness: 0.2,
           metalness: 0.8,
           transparent: true,
-          opacity: baseOpacity,
+          opacity: baseOpacity
         });
 
         // use size and position to mark important parts for animation
@@ -669,7 +669,7 @@ function createPlatformRings(diameters: number[], ringThickness: number[], opaci
       color: COLORS_ORANGE.darkBase,
       side: THREE.DoubleSide,
       transparent: true,
-      opacity: opacities[idx],
+      opacity: opacities[idx]
     });
 
     const ring = new THREE.Mesh(ringGeometry, ringMaterial);
@@ -693,7 +693,7 @@ function createCross(diameters: number[]): THREE.Group<THREE.Object3DEventMap> {
     new THREE.MeshBasicMaterial({
       color: COLORS_ORANGE.darkBase,
       transparent: true,
-      opacity: CROSS_OPACITY,
+      opacity: CROSS_OPACITY
     })
   );
 
@@ -703,7 +703,7 @@ function createCross(diameters: number[]): THREE.Group<THREE.Object3DEventMap> {
     new THREE.MeshBasicMaterial({
       color: COLORS_ORANGE.darkBase,
       transparent: true,
-      opacity: CROSS_OPACITY,
+      opacity: CROSS_OPACITY
     })
   );
 

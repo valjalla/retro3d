@@ -15,7 +15,7 @@ export function BuTTon({
   onClick,
   disabled = false,
   active = false,
-  className = "",
+  className = ""
 }: {
   primaryText: string;
   secondaryText: string;
@@ -25,7 +25,11 @@ export function BuTTon({
   className?: string;
 }) {
   return (
-    <button onClick={onClick} disabled={disabled} className={`model-viewer-button ${active ? "active" : ""} ${className}`}>
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`model-viewer-button ${active ? "active" : ""} ${className}`}
+    >
       <div className="button-content">
         <span className="button-primary-text">{primaryText}</span>
         <span className="button-secondary-text">{secondaryText}</span>
@@ -38,7 +42,7 @@ export function HEXBtn({
   primaryText,
   secondaryText,
   onClick,
-  disabled = false,
+  disabled = false
 }: {
   primaryText: string;
   secondaryText: string;
@@ -68,7 +72,7 @@ export function XEnoScript() {
       left: Math.random() * 90 + 5,
       top: Math.random() * 90 + 5,
       opacity: 0.5 + Math.random() * 0.5,
-      id: i,
+      id: i
     }));
     setChars(generatedChars);
   }, []);
@@ -82,7 +86,7 @@ export function XEnoScript() {
           style={{
             left: `${left}%`,
             top: `${top}%`,
-            opacity,
+            opacity
           }}
         >
           {char}
@@ -111,7 +115,7 @@ export function HEXAgrid() {
   return (
     <div className="hexagrid">
       {activeHexagons.map((isActive, index) => (
-        <div key={index} className={`hexagon ${isActive ? "active" : ""}`}></div>
+        <div key={index} className={`hexagon ${isActive ? "active" : ""}`} />
       ))}
     </div>
   );
