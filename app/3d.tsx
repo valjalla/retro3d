@@ -486,7 +486,7 @@ export default function ModelViewer() {
           left: `${panelPosition.x}px`,
           cursor: isPanelDragEnabled ? "move" : "auto"
         }}
-        className={isPanelDragEnabled ? "draggable-panel" : ""}
+        className={isPanelDragEnabled ? "draggable-panel animate-warning-blink" : ""}
       >
         <div className="content-group">
           <h3>OBJECT ANALYSIS</h3>
@@ -583,7 +583,7 @@ export default function ModelViewer() {
           secondaryText={isPanelDragEnabled ? "Lock/Panel" : "Unlock/Panle"}
           onClick={togglePanelDrag}
           active={isPanelDragEnabled}
-          className={isPanelDragEnabled ? "verde" : ""}
+          className={isPanelDragEnabled ? "verde animate-warning-blink" : ""}
         />
       </div>
     </div>
