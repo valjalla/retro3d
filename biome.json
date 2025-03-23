@@ -24,21 +24,26 @@
         "useSingleVarDeclarator": "off",
         "useTemplate": "off"
       },
-			"correctness": {
-				"useExhaustiveDependencies": "off"
-			},
-			"complexity": {
-				"noForEach": "off"
-			},
-			"nursery": {
-				"noIrregularWhitespace": "off"
-			}
+      "correctness": {
+        "useExhaustiveDependencies": "off"
+      },
+      "complexity": {
+        "noForEach": "off",
+        "noBannedTypes": "off"
+      },
+      "nursery": {
+        "noIrregularWhitespace": "off"
+      },
+      "suspicious": {
+        "noArrayIndexKey": "off"
+      }
     }
   },
   "javascript": {
     "formatter": {
       "quoteStyle": "double",
-      "semicolons": "always"
+      "semicolons": "always",
+      "trailingCommas": "none"
     }
   }
 }

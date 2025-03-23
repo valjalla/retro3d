@@ -3,7 +3,8 @@
 "use client";
 
 import * as THREE from "three";
-import React, { useRef, useState, useEffect, useCallback } from "react";
+import type React from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { ROw, BuTTon, XEnoScript, HEXAgrid, ScrollTXsT, HEXBtn } from "./ui";
@@ -395,8 +396,8 @@ export default function ModelViewer() {
       <div className="grid-lines" />
 
       <div className="axis-container" ref={axisContainerRef}>
-        <div className="axis x-axis"></div>
-        <div className="axis y-axis"></div>
+        <div className="axis x-axis" />
+        <div className="axis y-axis" />
 
         {ticksX.map((i) => (
           <div
@@ -405,7 +406,7 @@ export default function ModelViewer() {
             style={{
               right: `${(i / (ticksX.length - 1)) * 90}%`,
             }}
-          ></div>
+          />
         ))}
 
         {ticksY.map((i) => (
@@ -415,7 +416,7 @@ export default function ModelViewer() {
             style={{
               bottom: `${(i / (ticksY.length - 1)) * 90}%`,
             }}
-          ></div>
+          />
         ))}
       </div>
 
@@ -455,7 +456,7 @@ export default function ModelViewer() {
         <div className="content-group">
           <h3>CONFIGURATION</h3>
           <div className="status-bar">
-            <div className="status-fill"></div>
+            <div className="status-fill" />
           </div>
           <label htmlFor="model-upload" className="animate-warning-blink">
             情報作成 Upload GLB Model
@@ -564,9 +565,9 @@ function calculateModelStats(model: THREE.Group, fileName: string): ModelStats {
     meshes: meshCount,
     materials: materials.size,
     dimensions: {
-      width: parseFloat(size.x.toFixed(2)),
-      height: parseFloat(size.y.toFixed(2)),
-      depth: parseFloat(size.z.toFixed(2)),
+      width: Number.parseFloat(size.x.toFixed(2)),
+      height: Number.parseFloat(size.y.toFixed(2)),
+      depth: Number.parseFloat(size.z.toFixed(2)),
     },
   };
 }
