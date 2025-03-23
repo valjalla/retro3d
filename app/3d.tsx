@@ -2,87 +2,93 @@
 
 "use client";
 
-import React, { useRef, useState, useEffect, useCallback } from "react";
 import * as THREE from "three";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { ROw, BuTTon, XEnoScript, HEXAgrid, ScrollTXsT, HEXBtn } from "./ui";
 import type { ModelStats } from "./types";
 
-const SCALE_CAMERA = false,
-  PLATFORM_RADIUS = 2,
-  PLATFORM_SEGMENTS = 64,
-  LOAD_INIT_MODEL = true,
-  DEFAULT_MODEL = "/models/millennium_falcon.glb",
-  DEFAULT_MATERIAL_MODE = "holo",
-  DEFAULT_MODEL_ORIENTATION = Math.PI / 2.5,
-  ANIMATE_PLATFORM_OPACITY = false,
-  USE_COLOR_INTENSITY = false,
-  RING_DIAMETERS = [0.9, 1.2, 1.5],
-  RING_THICKNESS = [0.004, 0.008, 0.012],
-  RING_OPACITIES = [0.35, 0.35, 0.4],
-  MODEL_ROTATION_ENABLED = true,
-  MODEL_ROTATION_SPEED = 0.05,
-  MODEL_ROTATION_MIN_SPEED = 0.09,
-  MODEL_ROTATION_MAX_SPEED = 4.20,
+// biome-ignore format: consts
+const
+  SCALE_CAMERA                 = false,
+  PLATFORM_RADIUS              = 2,
+  PLATFORM_SEGMENTS            = 64,
+  LOAD_INIT_MODEL              = true,
+  DEFAULT_MODEL                = "/models/millennium_falcon.glb",
+  DEFAULT_MATERIAL_MODE        = "holo",
+  DEFAULT_MODEL_ORIENTATION    = Math.PI / 2.5,
+  ANIMATE_PLATFORM_OPACITY     = false,
+  USE_COLOR_INTENSITY          = false,
+  RING_DIAMETERS               = [0.9, 1.2, 1.5],
+  RING_THICKNESS               = [0.004, 0.008, 0.012],
+  RING_OPACITIES               = [0.35, 0.35, 0.4],
+  MODEL_ROTATION_ENABLED       = true,
+  MODEL_ROTATION_SPEED         = 0.05,
+  MODEL_ROTATION_MIN_SPEED     = 0.09,
+  MODEL_ROTATION_MAX_SPEED     = 4.2,
   MODEL_ROTATION_STEP_INTERVAL = 10,
-  MODEL_ROTATION_STEP_SIZE = 0.05,
-  SPEED_GAUGE_SEGMENTS = 15,
+  MODEL_ROTATION_STEP_SIZE     = 0.05,
+  SPEED_GAUGE_SEGMENTS         = 15,
   SPEED_SEGMENTS = Array.from(
     { length: SPEED_GAUGE_SEGMENTS },
-    (_, i) =>
-      MODEL_ROTATION_MIN_SPEED + (MODEL_ROTATION_MAX_SPEED - MODEL_ROTATION_MIN_SPEED) * (i / (SPEED_GAUGE_SEGMENTS - 1))
+    (_, i) => MODEL_ROTATION_MIN_SPEED + (MODEL_ROTATION_MAX_SPEED - MODEL_ROTATION_MIN_SPEED) * (i / (SPEED_GAUGE_SEGMENTS - 1))
   ),
+
   COLORS_NEON_GEN_BLUE = {
     base: 0x00ffff,
     darkBase: 0x00ccff,
     emissive: 0x00ffce,
     specular: 0x00ffce,
   },
-  COLORS_ORANGE = {
+  COLORS_ORANGE        = {
     base: 0xff8c00,
     darkBase: 0xff4800,
     emissive: 0x800000,
     specular: 0xff9900,
   },
-  COLORS_AURA = {
+  COLORS_AURA          = {
     base: 0xee6d2b,
     darkBase: 0x8b4513,
     emissive: 0x8b4513,
     specular: 0x8b4513,
   },
-  COLORS_VERDE = {
+  COLORS_VERDE         = {
     base: 0x399334,
     darkBase: 0x2e7d32,
     emissive: 0x2e7d32,
     specular: 0x2e7d32,
-  };
-const COLORS = COLORS_NEON_GEN_BLUE;
+  },
+  COLORS = COLORS_NEON_GEN_BLUE
+;
 
 type MaterialMode = "normal" | "spider" | "holo";
 
 export default function ModelViewer() {
-  const mountRef = useRef<HTMLDivElement>(null);
-  const [viewMode, setViewMode] = useState<"normal" | "spider" | "holo">(DEFAULT_MATERIAL_MODE);
-  const [modelLoaded, setModelLoaded] = useState(false);
-  const [modelStats, setModelStats] = useState<ModelStats | null>(null);
-  const [rotationEnabled, setRotationEnabled] = useState<boolean>(MODEL_ROTATION_ENABLED);
-  const [rotationSpeed, setRotationSpeed] = useState<number>(MODEL_ROTATION_SPEED);
-  const rotationEnabledRef = useRef<boolean>(MODEL_ROTATION_ENABLED);
-  const rotationSpeedRef = useRef<number>(MODEL_ROTATION_SPEED);
-  const sceneRef = useRef<THREE.Scene>(null);
-  const cameraRef = useRef<THREE.PerspectiveCamera>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer>(null);
-  const controlsRef = useRef<OrbitControls>(null);
-  const modelRef = useRef<THREE.Group<THREE.Object3DEventMap>>(null);
-  const animationRef = useRef<number>(null);
-  const timeRef = useRef<number>(0);
-  const rotationFrameRef = useRef<number>(0);
-  const [ticksX, setTicksX] = useState<number[]>([]);
-  const [ticksY, setTicksY] = useState<number[]>([]);
-  const axisContainerRef = useRef<HTMLDivElement>(null);
-  const speedGaugeRef = useRef<HTMLDivElement>(null);
-  const isDraggingRef = useRef<boolean>(false);
+  // biome-ignore format: consts
+  const
+    mountRef                              = useRef<HTMLDivElement>(null),
+    [viewMode, setViewMode]               = useState<"normal" | "spider" | "holo">(DEFAULT_MATERIAL_MODE),
+    [modelLoaded, setModelLoaded]         = useState(false),
+    [modelStats, setModelStats]           = useState<ModelStats | null>(null),
+    [rotationEnabled, setRotationEnabled] = useState<boolean>(MODEL_ROTATION_ENABLED),
+    [rotationSpeed, setRotationSpeed]     = useState<number>(MODEL_ROTATION_SPEED),
+    rotationEnabledRef                    = useRef<boolean>(MODEL_ROTATION_ENABLED),
+    rotationSpeedRef                      = useRef<number>(MODEL_ROTATION_SPEED),
+    sceneRef                              = useRef<THREE.Scene>(null),
+    cameraRef                             = useRef<THREE.PerspectiveCamera>(null),
+    rendererRef                           = useRef<THREE.WebGLRenderer>(null),
+    controlsRef                           = useRef<OrbitControls>(null),
+    modelRef                              = useRef<THREE.Group<THREE.Object3DEventMap>>(null),
+    animationRef                          = useRef<number>(null),
+    timeRef                               = useRef<number>(0),
+    rotationFrameRef                      = useRef<number>(0),
+    [ticksX, setTicksX]                   = useState<number[]>([]),
+    [ticksY, setTicksY]                   = useState<number[]>([]),
+    axisContainerRef                      = useRef<HTMLDivElement>(null),
+    speedGaugeRef                         = useRef<HTMLDivElement>(null),
+    isDraggingRef                         = useRef<boolean>(false)
+  ;
 
   useEffect(() => {
     rotationEnabledRef.current = rotationEnabled;
@@ -533,7 +539,7 @@ function calculateModelStats(model: THREE.Group, fileName: string): ModelStats {
         }
       }
 
-      if ((child as any).geometry) {
+      if ((child as THREE.Mesh).geometry) {
         const geometry = (child as THREE.Mesh).geometry;
         if (geometry.index !== null) {
           triangles += geometry.index.count / 3;
