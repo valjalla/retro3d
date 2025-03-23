@@ -42,15 +42,23 @@ export function HEXBtn({
   primaryText,
   secondaryText,
   onClick,
-  disabled = false
+  disabled = false,
+  active = false,
+  className = ""
 }: {
   primaryText: string;
   secondaryText: string;
   onClick: () => void;
   disabled?: boolean;
+  active?: boolean;
+  className?: string;
 }) {
   return (
-    <button className="hexagon-button" onClick={onClick} disabled={disabled}>
+    <button 
+      className={`hexagon-button ${active ? "active" : ""} ${className}`} 
+      onClick={onClick} 
+      disabled={disabled}
+    >
       <div className="button-content">
         <span className="button-primary-text">{primaryText}</span>
         <span className="button-secondary-text">{secondaryText}</span>

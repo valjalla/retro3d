@@ -68,27 +68,32 @@ type MaterialMode = "normal" | "spider" | "holo";
 export default function ModelViewer() {
   // biome-ignore format: consts
   const
-    mountRef                              = useRef<HTMLDivElement>(null),
-    [viewMode, setViewMode]               = useState<"normal" | "spider" | "holo">(DEFAULT_MATERIAL_MODE),
-    [modelLoaded, setModelLoaded]         = useState(false),
-    [modelStats, setModelStats]           = useState<ModelStats | null>(null),
-    [rotationEnabled, setRotationEnabled] = useState<boolean>(MODEL_ROTATION_ENABLED),
-    [rotationSpeed, setRotationSpeed]     = useState<number>(MODEL_ROTATION_SPEED),
-    rotationEnabledRef                    = useRef<boolean>(MODEL_ROTATION_ENABLED),
-    rotationSpeedRef                      = useRef<number>(MODEL_ROTATION_SPEED),
-    sceneRef                              = useRef<THREE.Scene>(null),
-    cameraRef                             = useRef<THREE.PerspectiveCamera>(null),
-    rendererRef                           = useRef<THREE.WebGLRenderer>(null),
-    controlsRef                           = useRef<OrbitControls>(null),
-    modelRef                              = useRef<THREE.Group<THREE.Object3DEventMap>>(null),
-    animationRef                          = useRef<number>(null),
-    timeRef                               = useRef<number>(0),
-    rotationFrameRef                      = useRef<number>(0),
-    [ticksX, setTicksX]                   = useState<number[]>([]),
-    [ticksY, setTicksY]                   = useState<number[]>([]),
-    axisContainerRef                      = useRef<HTMLDivElement>(null),
-    speedGaugeRef                         = useRef<HTMLDivElement>(null),
-    isDraggingRef                         = useRef<boolean>(false)
+    mountRef                                    = useRef<HTMLDivElement>(null),
+    [viewMode, setViewMode]                     = useState<"normal" | "spider" | "holo">(DEFAULT_MATERIAL_MODE),
+    [modelLoaded, setModelLoaded]               = useState(false),
+    [modelStats, setModelStats]                 = useState<ModelStats | null>(null),
+    [rotationEnabled, setRotationEnabled]       = useState<boolean>(MODEL_ROTATION_ENABLED),
+    [rotationSpeed, setRotationSpeed]           = useState<number>(MODEL_ROTATION_SPEED),
+    rotationEnabledRef                          = useRef<boolean>(MODEL_ROTATION_ENABLED),
+    rotationSpeedRef                            = useRef<number>(MODEL_ROTATION_SPEED),
+    sceneRef                                    = useRef<THREE.Scene>(null),
+    cameraRef                                   = useRef<THREE.PerspectiveCamera>(null),
+    rendererRef                                 = useRef<THREE.WebGLRenderer>(null),
+    controlsRef                                 = useRef<OrbitControls>(null),
+    modelRef                                    = useRef<THREE.Group<THREE.Object3DEventMap>>(null),
+    animationRef                                = useRef<number>(null),
+    timeRef                                     = useRef<number>(0),
+    rotationFrameRef                            = useRef<number>(0),
+    [ticksX, setTicksX]                         = useState<number[]>([]),
+    [ticksY, setTicksY]                         = useState<number[]>([]),
+    axisContainerRef                            = useRef<HTMLDivElement>(null),
+    speedGaugeRef                               = useRef<HTMLDivElement>(null),
+    isDraggingRef                               = useRef<boolean>(false),
+    panelRef                                    = useRef<HTMLDivElement>(null),
+    [isPanelDragEnabled, setIsPanelDragEnabled] = useState(false),
+    [isPanelDragging, setIsPanelDragging]       = useState(false),
+    [panelPosition, setPanelPosition]           = useState({ x: 20, y: 20 }),
+    [dragOffset, setDragOffset]                 = useState({ x: 0, y: 0 })
   ;
 
   useEffect(() => {
@@ -389,6 +394,52 @@ export default function ModelViewer() {
     };
   }, [handleMouseMove, handleMouseUp]);
 
+  const handlePanelMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (!isPanelDragEnabled || !panelRef.current) return;
+      // prevent conflict with other mouse handlers
+      e.stopPropagation();
+
+      const rect = panelRef.current.getBoundingClientRect();
+      setDragOffset({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      });
+      setIsPanelDragging(true);
+    },
+    [isPanelDragEnabled]
+  );
+
+  const handlePanelMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isPanelDragging) return;
+
+      setPanelPosition({
+        x: e.clientX - dragOffset.x,
+        y: e.clientY - dragOffset.y
+      });
+    },
+    [isPanelDragging, dragOffset]
+  );
+
+  const handlePanelMouseUp = useCallback(() => {
+    setIsPanelDragging(false);
+  }, []);
+
+  const togglePanelDrag = useCallback(() => {
+    setIsPanelDragEnabled(!isPanelDragEnabled);
+  }, [isPanelDragEnabled]);
+
+  useEffect(() => {
+    document.addEventListener("mousemove", handlePanelMouseMove);
+    document.addEventListener("mouseup", handlePanelMouseUp);
+
+    return () => {
+      document.removeEventListener("mousemove", handlePanelMouseMove);
+      document.removeEventListener("mouseup", handlePanelMouseUp);
+    };
+  }, [handlePanelMouseMove, handlePanelMouseUp]);
+
   return (
     <div className="model-viewer">
       <div ref={mountRef} id="interface-plane" />
@@ -426,7 +477,17 @@ export default function ModelViewer() {
         </h1>
       </div>
 
-      <div id="interface-panel">
+      <div
+        id="interface-panel"
+        ref={panelRef}
+        onMouseDown={handlePanelMouseDown}
+        style={{
+          top: `${panelPosition.y}px`,
+          left: `${panelPosition.x}px`,
+          cursor: isPanelDragEnabled ? "move" : "auto"
+        }}
+        className={isPanelDragEnabled ? "draggable-panel" : ""}
+      >
         <div className="content-group">
           <h3>OBJECT ANALYSIS</h3>
           <HEXAgrid />
@@ -517,6 +578,13 @@ export default function ModelViewer() {
       </div>
       <div id="alt-panel">
         <HEXBtn primaryText="クリア" secondaryText="Clear Model" onClick={clearModel} disabled={!modelLoaded} />
+        <HEXBtn
+          primaryText="移動"
+          secondaryText={isPanelDragEnabled ? "Lock/Panel" : "Unlock/Panle"}
+          onClick={togglePanelDrag}
+          active={isPanelDragEnabled}
+          className={isPanelDragEnabled ? "verde" : ""}
+        />
       </div>
     </div>
   );

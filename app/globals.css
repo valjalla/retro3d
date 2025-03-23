@@ -223,6 +223,17 @@ MARK: panel ele
   max-width: 400px;
   width: 100%;
   background-color: rgba(20, 20, 20, 0.5);
+  transition: border-color 0.2s ease;
+}
+
+#interface-panel.draggable-panel {
+  border: 1px solid var(--verde);
+  box-shadow: 0 0 8px rgba(var(--verde-color), 0.3);
+}
+
+#interface-panel.draggable-panel:hover {
+  border: 1px dashed var(--verde);
+  box-shadow: 0 0 12px rgba(var(--verde-color), 0.5);
 }
 
 #interface-name {
@@ -254,6 +265,8 @@ MARK: panel ele
   bottom: 40px;
   left: 40px;
   z-index: 20;
+  display: flex;
+  gap: 10px;
 }
 
 .content-group {
@@ -436,6 +449,20 @@ MARK: grid and axes
 /*
 MARK: buttons
 */
+.verde {
+  background-color: rgba(var(--verde-color), 0.15);
+  border: 1px solid var(--verde);
+  box-shadow: 0 0 5px rgba(var(--verde-color), 0.3);
+  color: var(--verde);
+}
+
+.verde:active,
+.verde:hover {
+  background-color: rgba(var(--verde-color), 0.25);
+  outline: 1px solid var(--verde);
+  color: var(--verde);
+}
+
 .model-viewer-button {
   display: inline-block;
   position: relative;
