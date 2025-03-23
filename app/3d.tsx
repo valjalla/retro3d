@@ -6,7 +6,7 @@ import React, { useRef, useState, useEffect, useCallback } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { ROw, BuTTon, XEnoScript, HEXAgrid, ScrollTXsT } from "./ui";
+import { ROw, BuTTon, XEnoScript, HEXAgrid, ScrollTXsT, HEXBtn } from "./ui";
 import type { ModelStats } from "./types";
 
 const SCALE_CAMERA = false,
@@ -30,7 +30,8 @@ const SCALE_CAMERA = false,
   SPEED_GAUGE_SEGMENTS = 14,
   SPEED_SEGMENTS = Array.from(
     { length: SPEED_GAUGE_SEGMENTS },
-    (_, i) => MODEL_ROTATION_MIN_SPEED + (MODEL_ROTATION_MAX_SPEED - MODEL_ROTATION_MIN_SPEED) * (i / (SPEED_GAUGE_SEGMENTS - 1))
+    (_, i) =>
+      MODEL_ROTATION_MIN_SPEED + (MODEL_ROTATION_MAX_SPEED - MODEL_ROTATION_MIN_SPEED) * (i / (SPEED_GAUGE_SEGMENTS - 1))
   ),
   COLORS_NEON_GEN_BLUE = {
     base: 0x00ffff,
@@ -429,10 +430,14 @@ export default function ModelViewer() {
               disabled={!modelLoaded}
             />
           </div>
+        </div>
+
+        <div className="content-group">
+          <h3>DYNAMICS</h3>
           <div className="rotation-controls">
             <BuTTon
               primaryText="回転"
-              secondaryText={rotationEnabled ? "Stop Rotation" : "Start Rotation"}
+              secondaryText={rotationEnabled ? "Freeze Model" : "Rotate Model"}
               onClick={() => setRotationEnabled(!rotationEnabled)}
               active={rotationEnabled}
               disabled={!modelLoaded}
@@ -455,13 +460,8 @@ export default function ModelViewer() {
           </div>
         </div>
       </div>
-      <div id="interface-clear-button">
-        <button className="hexagon-button" onClick={clearModel} disabled={!modelLoaded}>
-          <div className="button-content">
-            <span className="button-primary-text">クリア</span>
-            <span className="button-secondary-text">Clear Model</span>
-          </div>
-        </button>
+      <div id="alt-panel">
+        <HEXBtn primaryText="クリア" secondaryText="Clear Model" onClick={clearModel} disabled={!modelLoaded} />
       </div>
     </div>
   );

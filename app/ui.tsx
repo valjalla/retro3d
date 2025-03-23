@@ -34,6 +34,27 @@ export function BuTTon({
   );
 }
 
+export function HEXBtn({
+  primaryText,
+  secondaryText,
+  onClick,
+  disabled = false,
+}: {
+  primaryText: string;
+  secondaryText: string;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button className="hexagon-button" onClick={onClick} disabled={disabled}>
+      <div className="button-content">
+        <span className="button-primary-text">{primaryText}</span>
+        <span className="button-secondary-text">{secondaryText}</span>
+      </div>
+    </button>
+  );
+}
+
 export function XEnoScript() {
   const hebrewChars = "אבגדהוזחטיכלמנסעפצקרשת";
   const greekChars = "αβδεζηθλμξπρφχψω";
