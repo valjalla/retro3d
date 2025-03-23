@@ -50,8 +50,13 @@ const SCALE_CAMERA = false,
     darkBase: 0x8b4513,
     emissive: 0x8b4513,
     specular: 0x8b4513,
+  },
+  COLORS_VERDE = {
+    base: 0x399334,
+    darkBase: 0x2e7d32,
+    emissive: 0x2e7d32,
+    specular: 0x2e7d32,
   };
-
 const COLORS = COLORS_NEON_GEN_BLUE;
 
 type MaterialMode = "normal" | "spider" | "holo";
@@ -441,6 +446,7 @@ export default function ModelViewer() {
               onClick={() => setRotationEnabled(!rotationEnabled)}
               active={rotationEnabled}
               disabled={!modelLoaded}
+              className="verde"
             />
             <div className="rotation-speed-control">
               <div className="speed-gauge">
