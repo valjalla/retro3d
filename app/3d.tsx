@@ -8,10 +8,66 @@ import { useRef, useState, useEffect, useCallback } from "react";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { ROw, BuTTon, XEnoScript, HEXAgrid, ScrollTXsT, HEXBtn } from "./ui";
-import type { ModelStats } from "./types";
+import type { MaterialMode, ModelStats } from "./types";
+import { SketchfabBrowser } from "./sketchfab-browser";
+import {
+  calculateModelStats,
+  applyMaterialMode,
+  createPlatformRings,
+  updateHolographicEffect,
+  handleFileUpload,
+  createCross
+} from "./helpers";
+
+// biome-ignore format: colors
+export const 
+  COLORS_NEON_GEN_BLUE = {
+    base: 0x00ffff,
+    darkBase: 0x00ccff,
+    emissive: 0x00ffce,
+    specular: 0x00ffce
+  },
+  COLORS_ORANGE        = {
+    base: 0xff8c00,
+    darkBase: 0xff4800,
+    emissive: 0x800000,
+    specular: 0xff9900
+  },
+  COLORS_AURA          = {
+    base: 0xee6d2b,
+    darkBase: 0x8b4513,
+    emissive: 0x8b4513,
+    specular: 0x8b4513
+  },
+  COLORS_VERDE         = {
+    base: 0x399334,
+    darkBase: 0x2e7d32,
+    emissive: 0x2e7d32,
+    specular: 0x2e7d32
+  },
+  COLORS_VIOLET        = {
+    base: 0x6a5acd,
+    darkBase: 0x483d8b,
+    emissive: 0x483d8b,
+    specular: 0x483d8b
+  },
+  COLORS_RED           = {
+    base: 0xff0000,
+    darkBase: 0xcc0000,
+    emissive: 0xcc0000,
+    specular: 0xcc0000
+  },
+  COLORS_YELLOW        = {
+    base: 0xffff00,
+    darkBase: 0xcccc00,
+    emissive: 0xcccc00,
+    specular: 0xcccc00
+  },
+  COLORS = COLORS_NEON_GEN_BLUE
+;
 
 // biome-ignore format: consts
-const
+export const
   SCALE_CAMERA                 = false,
   PLATFORM_RADIUS              = 2,
   PLATFORM_SEGMENTS            = 64,
@@ -31,97 +87,90 @@ const
   MODEL_ROTATION_STEP_INTERVAL = 10,
   MODEL_ROTATION_STEP_SIZE     = 0.05,
   SPEED_GAUGE_SEGMENTS         = 15,
+  MINIMAP_ROTATION_SPEED       = 0.001,
   SPEED_SEGMENTS = Array.from(
     { length: SPEED_GAUGE_SEGMENTS },
-    (_, i) => MODEL_ROTATION_MIN_SPEED + (MODEL_ROTATION_MAX_SPEED - MODEL_ROTATION_MIN_SPEED) * (i / (SPEED_GAUGE_SEGMENTS - 1))
+    (_, i) =>
+      MODEL_ROTATION_MIN_SPEED +
+      (MODEL_ROTATION_MAX_SPEED - MODEL_ROTATION_MIN_SPEED) * (i / (SPEED_GAUGE_SEGMENTS - 1))
   ),
 
-  COLORS_NEON_GEN_BLUE = {
-    base: 0x00ffff,
-    darkBase: 0x00ccff,
-    emissive: 0x00ffce,
-    specular: 0x00ffce,
-  },
-  COLORS_ORANGE        = {
-    base: 0xff8c00,
-    darkBase: 0xff4800,
-    emissive: 0x800000,
-    specular: 0xff9900,
-  },
-  COLORS_AURA          = {
-    base: 0xee6d2b,
-    darkBase: 0x8b4513,
-    emissive: 0x8b4513,
-    specular: 0x8b4513,
-  },
-  COLORS_VERDE         = {
-    base: 0x399334,
-    darkBase: 0x2e7d32,
-    emissive: 0x2e7d32,
-    specular: 0x2e7d32,
-  },
-  COLORS = COLORS_NEON_GEN_BLUE
+  MINIMAP_RADIUS      = 90,
+  MINIMAP_SEGMENTS    = 16,
+  MINIMAP_POSITION    = { x: 100, y: 100 },
+  MINIMAP_SCALE       = 0.1,
+  CAMERA_MARKER_COLOR = COLORS_AURA.base,
+  MODEL_MARKER_COLOR  = COLORS_RED.base
 ;
 
-type MaterialMode = "normal" | "spider" | "holo";
-
-export default function ModelViewer() {
+export default function retro3d() {
   // biome-ignore format: consts
   const
-    mountRef                                    = useRef<HTMLDivElement>(null),
-    [viewMode, setViewMode]                     = useState<"normal" | "spider" | "holo">(DEFAULT_MATERIAL_MODE),
-    [modelLoaded, setModelLoaded]               = useState(false),
-    [modelStats, setModelStats]                 = useState<ModelStats | null>(null),
-    [rotationEnabled, setRotationEnabled]       = useState<boolean>(MODEL_ROTATION_ENABLED),
-    [rotationSpeed, setRotationSpeed]           = useState<number>(MODEL_ROTATION_SPEED),
-    rotationEnabledRef                          = useRef<boolean>(MODEL_ROTATION_ENABLED),
-    rotationSpeedRef                            = useRef<number>(MODEL_ROTATION_SPEED),
-    sceneRef                                    = useRef<THREE.Scene>(null),
-    cameraRef                                   = useRef<THREE.PerspectiveCamera>(null),
-    rendererRef                                 = useRef<THREE.WebGLRenderer>(null),
-    controlsRef                                 = useRef<OrbitControls>(null),
-    modelRef                                    = useRef<THREE.Group<THREE.Object3DEventMap>>(null),
-    animationRef                                = useRef<number>(null),
-    timeRef                                     = useRef<number>(0),
-    rotationFrameRef                            = useRef<number>(0),
-    [ticksX, setTicksX]                         = useState<number[]>([]),
-    [ticksY, setTicksY]                         = useState<number[]>([]),
-    axisContainerRef                            = useRef<HTMLDivElement>(null),
-    speedGaugeRef                               = useRef<HTMLDivElement>(null),
-    isDraggingRef                               = useRef<boolean>(false),
-    panelRef                                    = useRef<HTMLDivElement>(null),
-    [isPanelDragEnabled, setIsPanelDragEnabled] = useState(false),
-    [isPanelDragging, setIsPanelDragging]       = useState(false),
-    [panelPosition, setPanelPosition]           = useState({ x: 20, y: 20 }),
-    [dragOffset, setDragOffset]                 = useState({ x: 0, y: 0 })
+    mainSceneMount                                      = useRef<HTMLDivElement>(null),
+    [viewMode, setViewMode]                             = useState<"normal" | "spider" | "holo">(DEFAULT_MATERIAL_MODE),
+    [modelLoaded, setModelLoaded]                       = useState(false),
+    [modelStats, setModelStats]                         = useState<ModelStats | null>(null),
+    [rotationEnabled, setRotationEnabled]               = useState<boolean>(MODEL_ROTATION_ENABLED),
+    [rotationSpeed, setRotationSpeed]                   = useState<number>(MODEL_ROTATION_SPEED),
+    rotationEnabledRef                                  = useRef<boolean>(MODEL_ROTATION_ENABLED),
+    rotationSpeedRef                                    = useRef<number>(MODEL_ROTATION_SPEED),
+    sceneRef                                            = useRef<THREE.Scene>(null),
+    cameraRef                                           = useRef<THREE.PerspectiveCamera>(null),
+    rendererRef                                         = useRef<THREE.WebGLRenderer>(null),
+    controlsRef                                         = useRef<OrbitControls>(null),
+    modelRef                                            = useRef<THREE.Group<THREE.Object3DEventMap>>(null),
+    animationRef                                        = useRef<number>(null),
+    timeRef                                             = useRef<number>(0),
+    rotationFrameRef                                    = useRef<number>(0),
+    [ticksX, setTicksX]                                 = useState<number[]>([]),
+    [ticksY, setTicksY]                                 = useState<number[]>([]),
+    axisContainerRef                                    = useRef<HTMLDivElement>(null),
+    speedGaugeRef                                       = useRef<HTMLDivElement>(null),
+    isDraggingRef                                       = useRef<boolean>(false),
+    panelRef                                            = useRef<HTMLDivElement>(null),
+    sketchfabPanelRef                                   = useRef<HTMLDivElement | null>(null),
+    [isPanelDragEnabled, setIsPanelDragEnabled]         = useState(false),
+    [isPanelDragging, setIsPanelDragging]               = useState(false),
+    [mainPanelPosition, setMainPanelPosition]           = useState({ x: 20, y: 20 }),
+    [sketchfabPanelPosition, setSketchfabPanelPosition] = useState({ x: 465, y: 20 }),
+    [dragOffset, setDragOffset]                         = useState({ x: 0, y: 0 }),
+    [dragTargetRef, setDragTargetRef]                   = useState<React.RefObject<HTMLDivElement | null> | null>(null),
+    [isSketchfabPanelOpen, setIsSketchfabPanelOpen]     = useState(true),
+    [isFreecam, setIsFreecam]                           = useState(false),
+    [isPointerLocked, setIsPointerLocked]               = useState(false),
+    isFreecamRef                                        = useRef(false),
+    pressedKeys                                         = useRef(new Set<string>()),
+    cameraDirectionRef                                  = useRef(new THREE.Vector3(0, 0, -1)),
+    cameraPitchRef                                      = useRef(0),
+    cameraYawRef                                        = useRef(0),
+    minimapContainerRef                                 = useRef<HTMLDivElement>(null),
+    minimapSphereRef                                    = useRef<THREE.Mesh>(null),
+    minimapCameraMarkerRef                              = useRef<THREE.Mesh>(null),
+    minimapModelMarkerRef                               = useRef<THREE.Mesh>(null),
+    minimapSceneRef                                     = useRef<THREE.Scene>(null),
+    minimapRendererRef                                  = useRef<THREE.WebGLRenderer>(null),
+    minimapRotationRef                                  = useRef<number>(0)
   ;
 
-  useEffect(() => {
-    rotationEnabledRef.current = rotationEnabled;
-    rotationSpeedRef.current = rotationSpeed;
-  }, [rotationEnabled, rotationSpeed]);
+  const setMaterialMode = useCallback((mode: MaterialMode) => {
+    setViewMode(mode);
+    if (modelRef.current) {
+      applyMaterialMode(modelRef.current, mode);
+    }
+  }, []);
 
-  useEffect(() => {
-    const calculateTicks = () => {
-      if (!axisContainerRef.current) return;
+  const calculateAxisTicks = useCallback(() => {
+    if (!axisContainerRef.current) return;
 
-      const container = axisContainerRef.current;
-      const { width, height } = container.getBoundingClientRect();
-      const TICK_SPACING = 6;
+    const container = axisContainerRef.current;
+    const { width, height } = container.getBoundingClientRect();
+    const TICK_SPACING = 6;
 
-      const numTicksX = Math.floor(width / TICK_SPACING);
-      const numTicksY = Math.floor(height / TICK_SPACING);
-      const xArray = Array.from({ length: numTicksX }, (_, i) => i);
-      const yArray = Array.from({ length: numTicksY }, (_, i) => i);
+    const numTicksX = Math.floor(width / TICK_SPACING);
+    const numTicksY = Math.floor(height / TICK_SPACING);
 
-      setTicksX(xArray);
-      setTicksY(yArray);
-    };
-
-    calculateTicks();
-
-    window.addEventListener("resize", calculateTicks);
-    return () => window.removeEventListener("resize", calculateTicks);
+    setTicksX(Array.from({ length: numTicksX }, (_, i) => i));
+    setTicksY(Array.from({ length: numTicksY }, (_, i) => i));
   }, []);
 
   const loadModel = useCallback(
@@ -147,45 +196,19 @@ export default function ModelViewer() {
           }
 
           const model = gltf.scene;
-
-          const box = new THREE.Box3().setFromObject(model);
-          const center = box.getCenter(new THREE.Vector3());
-          const size = box.getSize(new THREE.Vector3());
-
-          // scale model to fit platform diameter (2 units)
-          const platformDiameter = 3.5;
-          const maxDimension = Math.max(size.x, size.y, size.z);
-          // reduce scaling by 20%
-          const scaleFactor = (platformDiameter / maxDimension) * 0.8;
-          model.scale.multiplyScalar(scaleFactor);
-
-          // center model and align base with platform
-          model.position.sub(center.multiplyScalar(scaleFactor));
-          const newBox = new THREE.Box3().setFromObject(model);
-          const minY = newBox.min.y;
-          // align base with platform (y = 0)
-          model.position.y -= minY;
-
-          // apply rotation to make model face the camera
-          model.rotation.y = DEFAULT_MODEL_ORIENTATION;
-
+          positionAndScaleModel(model);
           sceneRef.current.add(model);
           modelRef.current = model;
           setModelLoaded(true);
-
-          const stats = calculateModelStats(model, fileName);
-          setModelStats(stats);
-
+          setModelStats(calculateModelStats(model, fileName));
           applyMaterialMode(model, viewMode);
 
           if (SCALE_CAMERA) {
-            // adjust camera pos based on scaled model
-            const maxNewDim = platformDiameter;
-            cameraRef.current.position.z = maxNewDim * 0.8;
+            const platformDiameter = 3.5;
+            cameraRef.current.position.z = platformDiameter * 0.8;
             controlsRef.current.update();
           }
 
-          // only revoke URL if it's a blob URL (from file upload)
           if (url.startsWith("blob:")) {
             URL.revokeObjectURL(url);
           }
@@ -201,137 +224,80 @@ export default function ModelViewer() {
     [viewMode]
   );
 
-  useEffect(() => {
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
+  const createMinimap = useCallback(() => {
+    if (!minimapContainerRef.current || !cameraRef.current) return;
 
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 2, 3);
-    cameraRef.current = camera;
+    const minimapScene = new THREE.Scene();
+    minimapSceneRef.current = minimapScene;
+    const minimapRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    minimapRenderer.setSize(MINIMAP_RADIUS * 2, MINIMAP_RADIUS * 2);
+    minimapRenderer.setClearColor(0x000000, 0);
+    minimapRendererRef.current = minimapRenderer;
+    minimapContainerRef.current.appendChild(minimapRenderer.domElement);
 
-    // alpha transparency for css background usage
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    if (!mountRef.current) return;
-    mountRef.current.appendChild(renderer.domElement);
-    rendererRef.current = renderer;
-
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    // center on platform
-    controls.target.set(0, 0, 0);
-    controlsRef.current = controls;
-
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-    scene.add(ambientLight);
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-    directionalLight.position.set(1, 1, 1);
-    scene.add(directionalLight);
-
-    const platformGeometry = new THREE.CircleGeometry(PLATFORM_RADIUS, PLATFORM_SEGMENTS); // diameter = 4 units
-    const platformMaterial = new THREE.MeshBasicMaterial({
+    // create minimap sphere
+    const sphereGeometry = new THREE.SphereGeometry(1, MINIMAP_SEGMENTS, MINIMAP_SEGMENTS);
+    const sphereMaterial = new THREE.MeshBasicMaterial({
       color: COLORS.base,
-      side: THREE.DoubleSide,
-      opacity: 0.15,
-      transparent: true
+      wireframe: true,
+      transparent: true,
+      opacity: 0.2
     });
-    const platform = new THREE.Mesh(platformGeometry, platformMaterial);
-    platform.rotation.x = -Math.PI / 2; // lay flat
-    platform.position.y = -0.01; // slightly below origin to avoid z-fighting
-    scene.add(platform);
+    const minimapSphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+    minimapSphereRef.current = minimapSphere;
+    minimapScene.add(minimapSphere);
+    minimapRotationRef.current = 0;
 
-    // setup rings on scene
-    const rings = createPlatformRings(RING_DIAMETERS, RING_THICKNESS, RING_OPACITIES) as THREE.Mesh[];
-    rings.forEach((ring) => scene.add(ring));
+    // model/platform marker at center
+    const modelMarkerGeometry = new THREE.SphereGeometry(0.05, 8, 8);
+    const modelMarkerMaterial = new THREE.MeshBasicMaterial({ color: MODEL_MARKER_COLOR });
+    const modelMarker = new THREE.Mesh(modelMarkerGeometry, modelMarkerMaterial);
+    minimapModelMarkerRef.current = modelMarker;
+    minimapScene.add(modelMarker);
 
-    // setup cross on scene
-    scene.add(createCross(RING_DIAMETERS));
+    // camera marker
+    const cameraMarkerGeometry = new THREE.SphereGeometry(0.05, 8, 8);
+    const cameraMarkerMaterial = new THREE.MeshBasicMaterial({ color: CAMERA_MARKER_COLOR });
+    const cameraMarker = new THREE.Mesh(cameraMarkerGeometry, cameraMarkerMaterial);
+    minimapCameraMarkerRef.current = cameraMarker;
+    minimapScene.add(cameraMarker);
 
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    };
+    // minimap camera
+    const minimapCamera = new THREE.PerspectiveCamera(75, 1, 0.1, 10);
+    minimapCamera.position.set(0, 0, 2);
+    minimapCamera.lookAt(0, 0, 0);
 
-    window.addEventListener("resize", handleResize);
-
-    const animate = () => {
-      animationRef.current = requestAnimationFrame(animate);
-      controls.update();
-      timeRef.current += 0.01;
-
-      if (rotationEnabledRef.current && modelRef.current) {
-        rotationFrameRef.current += 1;
-        if (rotationFrameRef.current % MODEL_ROTATION_STEP_INTERVAL === 0) {
-          modelRef.current.rotation.y += MODEL_ROTATION_STEP_SIZE * rotationSpeedRef.current;
-        }
-      }
-
-      if (modelRef.current) {
-        updateHolographicEffect(modelRef.current);
-      }
-
-      if (Math.random() > 0.98) {
-        // animate random "scan" lines
-        const lineMaterial = new THREE.LineBasicMaterial({
-          color: COLORS.base,
-          transparent: true,
-          opacity: 0.1 + Math.random() * 0.5
-        });
-        const lineGeometry = new THREE.BufferGeometry();
-        const positions = new Float32Array(2 * 3);
-        positions[0] = Math.random() * 2 - 1;
-        positions[1] = Math.random() * 2 - 1;
-        positions[2] = Math.random() * 2 - 1;
-        positions[3] = Math.random() * 2 - 1;
-        positions[4] = Math.random() * 2 - 1;
-        positions[5] = Math.random() * 2 - 1;
-        lineGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-        const line = new THREE.Line(lineGeometry, lineMaterial);
-        scene.add(line);
-        setTimeout(() => {
-          scene.remove(line);
-        }, 1000);
-
-        if (ANIMATE_PLATFORM_OPACITY) {
-          platform.material.opacity = 0.1 + Math.random() * 0.1;
-        }
-      }
-
-      renderer.render(scene, camera);
-    };
-
-    animate();
-
-    // load default model when component mounts
-    if (LOAD_INIT_MODEL) {
-      loadModel(DEFAULT_MODEL, DEFAULT_MODEL.split("/").pop() || "Unknown Model");
-    }
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-      if (mountRef.current && renderer.domElement) {
-        mountRef.current.removeChild(renderer.domElement);
-      }
-      if (modelRef.current) {
-        scene.remove(modelRef.current);
-        modelRef.current = null;
-      }
-    };
+    minimapRenderer.render(minimapScene, minimapCamera);
   }, []);
 
-  const setMaterialMode = (mode: MaterialMode) => {
-    setViewMode(mode);
-    if (modelRef.current) {
-      applyMaterialMode(modelRef.current, mode);
-    }
-  };
+  const updateMinimap = useCallback(() => {
+    if (
+      !minimapSphereRef.current ||
+      !minimapCameraMarkerRef.current ||
+      !minimapRendererRef.current ||
+      !minimapSceneRef.current ||
+      !cameraRef.current
+    )
+      return;
+
+    minimapRotationRef.current += MINIMAP_ROTATION_SPEED;
+    minimapSphereRef.current.rotation.y = minimapRotationRef.current;
+
+    // calculate the normalized direction vector from camera to origin
+    const cameraPosition = cameraRef.current.position.clone();
+    const cameraDirection = new THREE.Vector3(0, 0, 0).sub(cameraPosition).normalize();
+
+    // position the camera marker based on the normalized camera position vector
+    const normalizedCameraPos = cameraPosition.clone().normalize().multiplyScalar(0.8);
+    minimapCameraMarkerRef.current.position.copy(normalizedCameraPos);
+
+    // create a temporary minimap camera for rendering
+    const minimapCamera = new THREE.PerspectiveCamera(75, 1, 0.1, 10);
+    minimapCamera.position.set(0, 0, 2);
+    minimapCamera.lookAt(0, 0, 0);
+
+    minimapRendererRef.current.render(minimapSceneRef.current, minimapCamera);
+  }, []);
 
   const clearModel = useCallback(() => {
     if (!sceneRef.current || !modelRef.current) return;
@@ -342,11 +308,6 @@ export default function ModelViewer() {
     setModelLoaded(false);
     setModelStats(null);
   }, []);
-
-  const handleSpeedSegmentClick = (segmentValue: number) => {
-    if (!modelLoaded || !rotationEnabled) return;
-    setRotationSpeed(segmentValue);
-  };
 
   const getActiveSegmentIndex = () => {
     const segmentWidth = (MODEL_ROTATION_MAX_SPEED - MODEL_ROTATION_MIN_SPEED) / (SPEED_GAUGE_SEGMENTS - 1);
@@ -384,6 +345,212 @@ export default function ModelViewer() {
     setRotationSpeed(newSpeed);
   }, []);
 
+  const handlePanelMouseDown = useCallback(
+    (e: React.MouseEvent, targetRef: React.RefObject<HTMLDivElement | null>) => {
+      if (!isPanelDragEnabled) return;
+      e.stopPropagation();
+
+      const rect = targetRef.current?.getBoundingClientRect();
+      if (!rect) return;
+
+      setDragOffset({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      });
+      setDragTargetRef(targetRef);
+      setIsPanelDragging(true);
+    },
+    [isPanelDragEnabled]
+  );
+
+  const handlePanelMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isPanelDragging || !dragTargetRef) return;
+
+      if (dragTargetRef === panelRef) {
+        setMainPanelPosition({
+          x: e.clientX - dragOffset.x,
+          y: e.clientY - dragOffset.y
+        });
+      } else if (dragTargetRef === sketchfabPanelRef) {
+        setSketchfabPanelPosition({
+          x: e.clientX - dragOffset.x,
+          y: e.clientY - dragOffset.y
+        });
+      }
+    },
+    [isPanelDragging, dragOffset, dragTargetRef]
+  );
+
+  const handlePanelMouseUp = useCallback(() => {
+    setIsPanelDragging(false);
+    setDragTargetRef(null);
+  }, []);
+
+  const togglePanelDrag = useCallback(() => {
+    setIsPanelDragEnabled(!isPanelDragEnabled);
+  }, [isPanelDragEnabled]);
+
+  // freecam control functions
+  const enterFreecam = () => {
+    if (rendererRef.current) {
+      rendererRef.current.domElement.requestPointerLock();
+      setIsFreecam(true);
+      if (controlsRef.current) {
+        controlsRef.current.enabled = false;
+      }
+
+      // initialize camera rotation values based on current camera orientation
+      if (cameraRef.current) {
+        const euler = new THREE.Euler().setFromQuaternion(cameraRef.current.quaternion, "YXZ");
+        cameraPitchRef.current = euler.x;
+        cameraYawRef.current = euler.y;
+      }
+    }
+  };
+
+  const exitFreecam = () => {
+    if (document.pointerLockElement === rendererRef.current?.domElement) {
+      document.exitPointerLock();
+    }
+    setIsFreecam(false);
+    if (controlsRef.current) {
+      controlsRef.current.enabled = true;
+    }
+  };
+
+  // MARK: main scene & effects
+  useEffect(() => {
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 2, 3);
+    cameraRef.current = camera;
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    if (!mainSceneMount.current) return;
+    mainSceneMount.current.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.target.set(0, 0, 0);
+    controlsRef.current = controls;
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    addLights(scene);
+    addSceneDecorations(scene);
+    createMinimap();
+
+    const animate = () => {
+      animationRef.current = requestAnimationFrame(animate);
+      // only update OrbitControls when not in freecam mode
+      if (!isFreecamRef.current) {
+        controls.update();
+      }
+      timeRef.current += 0.01;
+
+      if (rotationEnabledRef.current && modelRef.current) {
+        rotationFrameRef.current += 1;
+        if (rotationFrameRef.current % MODEL_ROTATION_STEP_INTERVAL === 0) {
+          modelRef.current.rotation.y += MODEL_ROTATION_STEP_SIZE * rotationSpeedRef.current;
+        }
+      }
+
+      if (modelRef.current) {
+        updateHolographicEffect(modelRef.current);
+      }
+
+      if (Math.random() > 0.98) {
+        addRandomScanLine(scene);
+      }
+
+      // freecam movement logic
+      if (isFreecamRef.current) {
+        const speed = 0.1; // Movement speed, adjustable
+        const direction = new THREE.Vector3();
+
+        // forward is always the direction the camera is facing (negative z in camera space)
+        if (pressedKeys.current.has("w")) direction.z -= 1; // forward
+        if (pressedKeys.current.has("s")) direction.z += 1; // backward
+        if (pressedKeys.current.has("a")) direction.x -= 1; // left (strafe)
+        if (pressedKeys.current.has("d")) direction.x += 1; // right (strafe)
+        if (pressedKeys.current.has(" ")) direction.y += 1; // up (space)
+        if (pressedKeys.current.has("shift")) direction.y -= 1; // down (shift)
+
+        if (direction.length() > 0) {
+          direction.normalize();
+
+          // create a quaternion from the current yaw and pitch
+          const quaternion = new THREE.Quaternion();
+          quaternion.setFromEuler(
+            new THREE.Euler(
+              cameraPitchRef.current,
+              cameraYawRef.current,
+              0,
+              // the order matters for proper FPS controls
+              "YXZ"
+            )
+          );
+
+          // apply the quaternion to the direction vector
+          direction.applyQuaternion(quaternion).multiplyScalar(speed);
+          camera.position.add(direction);
+        }
+      }
+
+      updateMinimap();
+
+      renderer.render(scene, camera);
+    };
+
+    animate();
+
+    if (LOAD_INIT_MODEL) {
+      loadModel(DEFAULT_MODEL, DEFAULT_MODEL.split("/").pop() || "Unknown Model");
+    }
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+      if (mainSceneMount.current && renderer.domElement) {
+        mainSceneMount.current.removeChild(renderer.domElement);
+      }
+      if (modelRef.current) {
+        scene.remove(modelRef.current);
+        modelRef.current = null;
+      }
+      if (minimapContainerRef.current && minimapRendererRef.current?.domElement) {
+        minimapContainerRef.current.removeChild(minimapRendererRef.current.domElement);
+      }
+    };
+  }, [createMinimap, updateMinimap]);
+
+  useEffect(() => {
+    rotationEnabledRef.current = rotationEnabled;
+    rotationSpeedRef.current = rotationSpeed;
+    isFreecamRef.current = isFreecam;
+  }, [rotationEnabled, rotationSpeed, isFreecam]);
+
+  useEffect(() => {
+    window.addEventListener("resize", calculateAxisTicks);
+    return () => window.removeEventListener("resize", calculateAxisTicks);
+  }, []);
+
   useEffect(() => {
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
@@ -393,42 +560,6 @@ export default function ModelViewer() {
       document.removeEventListener("mouseup", handleMouseUp);
     };
   }, [handleMouseMove, handleMouseUp]);
-
-  const handlePanelMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      if (!isPanelDragEnabled || !panelRef.current) return;
-      // prevent conflict with other mouse handlers
-      e.stopPropagation();
-
-      const rect = panelRef.current.getBoundingClientRect();
-      setDragOffset({
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
-      });
-      setIsPanelDragging(true);
-    },
-    [isPanelDragEnabled]
-  );
-
-  const handlePanelMouseMove = useCallback(
-    (e: MouseEvent) => {
-      if (!isPanelDragging) return;
-
-      setPanelPosition({
-        x: e.clientX - dragOffset.x,
-        y: e.clientY - dragOffset.y
-      });
-    },
-    [isPanelDragging, dragOffset]
-  );
-
-  const handlePanelMouseUp = useCallback(() => {
-    setIsPanelDragging(false);
-  }, []);
-
-  const togglePanelDrag = useCallback(() => {
-    setIsPanelDragEnabled(!isPanelDragEnabled);
-  }, [isPanelDragEnabled]);
 
   useEffect(() => {
     document.addEventListener("mousemove", handlePanelMouseMove);
@@ -440,11 +571,110 @@ export default function ModelViewer() {
     };
   }, [handlePanelMouseMove, handlePanelMouseUp]);
 
+  const toggleSketchfabPanel = useCallback(() => {
+    setIsSketchfabPanelOpen(!isSketchfabPanelOpen);
+  }, [isSketchfabPanelOpen]);
+
+  const handleSelectSketchfabModel = (modelUrl: string, fileName: string) => {
+    loadModel(modelUrl, fileName);
+  };
+
+  // keyboard event listeners for freecam movement
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isFreecam) {
+        pressedKeys.current.add(e.key.toLowerCase());
+
+        if (e.key === "Escape") {
+          exitFreecam();
+        }
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (isFreecam) {
+        pressedKeys.current.delete(e.key.toLowerCase());
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, [isFreecam]);
+
+  // pointer lock event listener for entering/exiting freecam
+  useEffect(() => {
+    const handlePointerLockChange = () => {
+      if (document.pointerLockElement === rendererRef.current?.domElement) {
+        setIsPointerLocked(true);
+      } else {
+        setIsPointerLocked(false);
+        if (isFreecam) {
+          setIsFreecam(false);
+          if (controlsRef.current) {
+            controlsRef.current.enabled = true;
+          }
+        }
+      }
+    };
+    document.addEventListener("pointerlockchange", handlePointerLockChange);
+
+    return () => {
+      document.removeEventListener("pointerlockchange", handlePointerLockChange);
+    };
+  }, [isFreecam]);
+
+  // mouse movement listener for camera rotation
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isFreecam && isPointerLocked && cameraRef.current) {
+        const movementX = e.movementX || 0;
+        const movementY = e.movementY || 0;
+        const sensitivity = 0.002;
+
+        // update yaw (left/right) and pitch (up/down) based on mouse movement
+        cameraYawRef.current -= movementX * sensitivity;
+        cameraPitchRef.current -= movementY * sensitivity;
+
+        // clamp pitch to prevent flipping
+        cameraPitchRef.current = Math.max(-Math.PI / 2 + 0.01, Math.min(Math.PI / 2 - 0.01, cameraPitchRef.current));
+
+        // apply rotation using quaternion to avoid gimbal lock
+        const quaternion = new THREE.Quaternion();
+        quaternion.setFromEuler(
+          new THREE.Euler(
+            cameraPitchRef.current,
+            cameraYawRef.current,
+            0,
+            // order matters for first-person camera
+            "YXZ"
+          )
+        );
+
+        cameraRef.current.quaternion.copy(quaternion);
+        // update the camera direction vector for movement calculations
+        cameraDirectionRef.current.set(0, 0, -1).applyQuaternion(quaternion);
+      }
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+    };
+  }, [isFreecam, isPointerLocked]);
+
   return (
     <div className="model-viewer">
-      <div ref={mountRef} id="interface-plane" />
-      <XEnoScript />
+      {isFreecam && <div className="freecam-indicator">FREECAM MODE - Press ESC to exit</div>}
+      <div ref={mainSceneMount} id="interface-plane" />
+      <div ref={minimapContainerRef} className="minimap-container" />
       <div className="grid-lines" />
+      <XEnoScript />
 
       <div className="axis-container" ref={axisContainerRef}>
         <div className="axis x-axis" />
@@ -480,13 +710,12 @@ export default function ModelViewer() {
       <div
         id="interface-panel"
         ref={panelRef}
-        onMouseDown={handlePanelMouseDown}
+        onMouseDown={(e) => handlePanelMouseDown(e, panelRef)}
         style={{
-          top: `${panelPosition.y}px`,
-          left: `${panelPosition.x}px`,
-          cursor: isPanelDragEnabled ? "move" : "auto"
+          top: `${mainPanelPosition.y}px`,
+          left: `${mainPanelPosition.x}px`
         }}
-        className={isPanelDragEnabled ? "draggable-panel animate-warning-blink" : ""}
+        className={isPanelDragEnabled ? "draggable-panel animate-warning-blink moving" : ""}
       >
         <div className="content-group">
           <h3>OBJECT ANALYSIS</h3>
@@ -494,7 +723,7 @@ export default function ModelViewer() {
           <div className="stats-table">
             <div className="stats-row">
               <span className="stats-label">File:</span>
-              <span className="stats-value stats-value-filename animate-blink">
+              <span className="stats-value animate-blink">
                 {modelStats ? <ScrollTXsT text={modelStats.fileName} /> : <ScrollTXsT text="--" />}
               </span>
             </div>
@@ -576,211 +805,118 @@ export default function ModelViewer() {
           </div>
         </div>
       </div>
+
+      {isSketchfabPanelOpen && (
+        <div
+          id="sketchfab-panel"
+          ref={sketchfabPanelRef}
+          onMouseDown={(e) => handlePanelMouseDown(e, sketchfabPanelRef)}
+          style={{
+            top: `${sketchfabPanelPosition.y}px`,
+            left: `${sketchfabPanelPosition.x}px`
+          }}
+          className={isPanelDragEnabled ? "draggable-panel animate-warning-blink moving" : ""}
+        >
+          <SketchfabBrowser
+            isOpen={isSketchfabPanelOpen}
+            onClose={toggleSketchfabPanel}
+            onSelectModel={handleSelectSketchfabModel}
+          />
+        </div>
+      )}
+
       <div id="alt-panel">
         <HEXBtn primaryText="クリア" secondaryText="Clear Model" onClick={clearModel} disabled={!modelLoaded} />
         <HEXBtn
           primaryText="移動"
-          secondaryText={isPanelDragEnabled ? "Lock/Panel" : "Unlock/Panle"}
+          secondaryText={isPanelDragEnabled ? "Lock Panel" : "Unlock Panels"}
           onClick={togglePanelDrag}
           active={isPanelDragEnabled}
           className={isPanelDragEnabled ? "verde animate-warning-blink" : ""}
+        />
+        <HEXBtn
+          primaryText="検索"
+          secondaryText="Browse Models"
+          onClick={toggleSketchfabPanel}
+          active={isSketchfabPanelOpen}
+          className={isSketchfabPanelOpen ? "azul animate-warning-blink" : ""}
+        />
+        <HEXBtn
+          primaryText="フリーラム"
+          secondaryText="Enter Freecam"
+          onClick={enterFreecam}
+          disabled={isFreecam || !modelLoaded}
         />
       </div>
     </div>
   );
 }
 
-function calculateModelStats(model: THREE.Group, fileName: string): ModelStats {
-  let vertices = 0;
-  let triangles = 0;
-  let meshCount = 0;
-  const materials = new Set();
-
-  model.traverse((child) => {
-    if (child instanceof THREE.Mesh) {
-      meshCount++;
-
-      if (child.material) {
-        if (Array.isArray(child.material)) {
-          child.material.forEach((mat) => materials.add(mat));
-        } else {
-          materials.add(child.material);
-        }
-      }
-
-      if ((child as THREE.Mesh).geometry) {
-        const geometry = (child as THREE.Mesh).geometry;
-        if (geometry.index !== null) {
-          triangles += geometry.index.count / 3;
-        } else if (geometry.attributes.position) {
-          triangles += geometry.attributes.position.count / 3;
-        }
-
-        if (geometry.attributes.position) {
-          vertices += geometry.attributes.position.count;
-        }
-      }
-    }
-  });
-
+function positionAndScaleModel(model: THREE.Group): THREE.Group {
   const box = new THREE.Box3().setFromObject(model);
+  const center = box.getCenter(new THREE.Vector3());
   const size = box.getSize(new THREE.Vector3());
 
-  return {
-    fileName,
-    vertices,
-    triangles: Math.floor(triangles),
-    meshes: meshCount,
-    materials: materials.size,
-    dimensions: {
-      width: Number.parseFloat(size.x.toFixed(2)),
-      height: Number.parseFloat(size.y.toFixed(2)),
-      depth: Number.parseFloat(size.z.toFixed(2))
-    }
-  };
+  const platformDiameter = 3.5;
+  const maxDimension = Math.max(size.x, size.y, size.z);
+  const scaleFactor = (platformDiameter / maxDimension) * 0.8;
+  model.scale.multiplyScalar(scaleFactor);
+
+  model.position.sub(center.multiplyScalar(scaleFactor));
+  const newBox = new THREE.Box3().setFromObject(model);
+  const minY = newBox.min.y;
+  model.position.y -= minY;
+
+  model.rotation.y = DEFAULT_MODEL_ORIENTATION;
+
+  return model;
 }
 
-function applyMaterialMode(model: THREE.Group, mode: MaterialMode): void {
-  model.traverse((child) => {
-    if (child instanceof THREE.Mesh && child.material) {
-      if (mode !== "normal" && !child.userData.originalMaterial) {
-        child.userData.originalMaterial = child.material.clone();
-      }
+function addLights(scene: THREE.Scene) {
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+  scene.add(ambientLight);
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+  directionalLight.position.set(1, 1, 1);
+  scene.add(directionalLight);
+}
 
-      if (mode === "spider") {
-        const spiderMaterial = new THREE.MeshPhongMaterial({
-          color: COLORS.base,
-          emissive: COLORS.emissive,
-          specular: COLORS.specular,
-          shininess: 30,
-          wireframe: true,
-          transparent: true,
-          opacity: 0.7,
-          flatShading: true
-        });
-        child.material = spiderMaterial;
-      } else if (mode === "holo") {
-        const originalColor = (child.material as THREE.MeshStandardMaterial)?.color || new THREE.Color(0xffffff);
-        const colorIntensity = (originalColor.r + originalColor.g + originalColor.b) / 3;
-        let baseOpacity = 0.5;
-        if (USE_COLOR_INTENSITY) {
-          // use color intensity to determine opacity
-          baseOpacity = Math.max(0.3, Math.min(0.8, colorIntensity));
-        }
-
-        const holoMaterial = new THREE.MeshStandardMaterial({
-          color: COLORS.base,
-          emissive: COLORS.emissive,
-          roughness: 0.2,
-          metalness: 0.8,
-          transparent: true,
-          opacity: baseOpacity
-        });
-
-        // use size and position to mark important parts for animation
-        const bbox = new THREE.Box3().setFromObject(child);
-        const size = bbox.getSize(new THREE.Vector3());
-        const volume = size.x * size.y * size.z;
-        const VOLUME_THRESHOLD = 0.2;
-        const isSignificantPart = volume > VOLUME_THRESHOLD;
-        child.userData.animateOpacity = isSignificantPart;
-
-        child.material = holoMaterial;
-      } else if (mode === "normal" && child.userData.originalMaterial) {
-        child.material = child.userData.originalMaterial;
-      }
-    }
+function addSceneDecorations(scene: THREE.Scene) {
+  const platformGeometry = new THREE.CircleGeometry(PLATFORM_RADIUS, PLATFORM_SEGMENTS);
+  const platformMaterial = new THREE.MeshBasicMaterial({
+    color: COLORS.base,
+    side: THREE.DoubleSide,
+    opacity: 0.15,
+    transparent: true
   });
+  const platform = new THREE.Mesh(platformGeometry, platformMaterial);
+  platform.rotation.x = -Math.PI / 2;
+  platform.position.y = -0.01;
+  scene.add(platform);
+
+  const rings = createPlatformRings(RING_DIAMETERS, RING_THICKNESS, RING_OPACITIES) as THREE.Mesh[];
+  rings.forEach((ring) => scene.add(ring));
+
+  scene.add(createCross(RING_DIAMETERS));
 }
 
-function updateHolographicEffect(model: THREE.Group): void {
-  model.traverse((child) => {
-    // only animate opacity for parts marked for animation
-    if (
-      child instanceof THREE.Mesh &&
-      child.material instanceof THREE.MeshStandardMaterial &&
-      child.userData.animateOpacity
-    ) {
-      const material = child.material;
-      const baseOpacity = 0.6;
-
-      if (Math.random() > 0.97) {
-        const opacityVariation = 0.1;
-        const randomFactor = Math.random() * opacityVariation - opacityVariation / 2;
-        material.opacity = baseOpacity + randomFactor;
-      }
-    }
+function addRandomScanLine(scene: THREE.Scene) {
+  const lineMaterial = new THREE.LineBasicMaterial({
+    color: COLORS.base,
+    transparent: true,
+    opacity: 0.1 + Math.random() * 0.5
   });
-}
-
-function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>, loadModelCallback: Function): void {
-  if (!event.target.files?.[0]) return;
-
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const url = URL.createObjectURL(file);
-  loadModelCallback(url, file.name);
-}
-
-function createPlatformRings(diameters: number[], ringThickness: number[], opacities: number[]): THREE.Mesh[] {
-  const rings: THREE.Mesh[] = [];
-
-  diameters.forEach((diameter, idx) => {
-    const ringGeometry = new THREE.RingGeometry(
-      diameter - ringThickness[idx] / 2, // inner radius
-      diameter + ringThickness[idx] / 2, // outer radius (inner + thickness)
-      128 // theta segments (roundness of the ring)
-    );
-
-    const ringMaterial = new THREE.MeshBasicMaterial({
-      color: COLORS_ORANGE.darkBase,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: opacities[idx]
-    });
-
-    const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-    ring.rotation.x = -Math.PI / 2;
-    ring.position.y = 0; // position right at platform level
-    rings.push(ring);
-  });
-
-  return rings;
-}
-
-function createCross(diameters: number[]): THREE.Group<THREE.Object3DEventMap> {
-  const outerRingSize = diameters[diameters.length - 1];
-  const crossSize = outerRingSize * 1;
-  const CROSS_OPACITY = 0.6;
-  const lineThickness = 0.01;
-
-  const horizontalGeometry = new THREE.BoxGeometry(crossSize * 2, 0, lineThickness);
-  const horizontalLine = new THREE.Mesh(
-    horizontalGeometry,
-    new THREE.MeshBasicMaterial({
-      color: COLORS_ORANGE.darkBase,
-      transparent: true,
-      opacity: CROSS_OPACITY
-    })
-  );
-
-  const verticalGeometry = new THREE.BoxGeometry(lineThickness, 0, crossSize * 2);
-  const verticalLine = new THREE.Mesh(
-    verticalGeometry,
-    new THREE.MeshBasicMaterial({
-      color: COLORS_ORANGE.darkBase,
-      transparent: true,
-      opacity: CROSS_OPACITY
-    })
-  );
-
-  const crossGroup = new THREE.Group();
-  crossGroup.add(horizontalLine);
-  crossGroup.add(verticalLine);
-
-  // position at platform level (a bit on top of rings to avoid z-fighting)
-  crossGroup.position.y = 0.0001;
-
-  return crossGroup;
+  const lineGeometry = new THREE.BufferGeometry();
+  const positions = new Float32Array(2 * 3);
+  positions[0] = Math.random() * 2 - 1;
+  positions[1] = Math.random() * 2 - 1;
+  positions[2] = Math.random() * 2 - 1;
+  positions[3] = Math.random() * 2 - 1;
+  positions[4] = Math.random() * 2 - 1;
+  positions[5] = Math.random() * 2 - 1;
+  lineGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  const line = new THREE.Line(lineGeometry, lineMaterial);
+  scene.add(line);
+  setTimeout(() => {
+    scene.remove(line);
+  }, 1000);
 }

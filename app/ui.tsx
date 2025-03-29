@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 
-export function ROw({ label, value }: { label: string; value?: string }) {
+export function ROw({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="stats-row">
       <span className="stats-label">{label}:</span>
@@ -129,7 +129,7 @@ export function HEXAgrid() {
   );
 }
 
-export function ScrollTXsT({ text }: { text: string }) {
+export function ScrollTXsT({ text, width = 200 }: { text: string, width?: number }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
 
@@ -193,7 +193,7 @@ export function ScrollTXsT({ text }: { text: string }) {
   }, [text]);
 
   return (
-    <div ref={containerRef} style={{ width: "200px", overflow: "hidden" }}>
+    <div ref={containerRef} style={{ width: `${width}px`, overflow: "hidden" }}>
       <span ref={textRef} style={{ whiteSpace: "nowrap", display: "inline-block" }}>
         {text}
       </span>

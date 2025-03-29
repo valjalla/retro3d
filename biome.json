@@ -23,14 +23,16 @@
       "recommended": true,
       "style": {
         "useSingleVarDeclarator": "off",
-        "useTemplate": "off"
+        "useTemplate": "off",
+        "useConst": "off"
       },
       "correctness": {
         "useExhaustiveDependencies": "off"
       },
       "complexity": {
         "noForEach": "off",
-        "noBannedTypes": "off"
+        "noBannedTypes": "off",
+        "noStaticOnlyClass": "off"
       },
       "nursery": {
         "noIrregularWhitespace": "off"
