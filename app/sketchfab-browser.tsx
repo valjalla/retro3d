@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { SketchfabModel } from "./types";
-import { Sketchfab } from "./sketchfab-api";
+import Sketchfab from "./sketchfab-api";
 import { BuTTon, ScrollTXsT, ROw } from "./ui";
 
 // biome-ignore format: consts

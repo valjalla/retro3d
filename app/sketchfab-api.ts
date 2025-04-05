@@ -6,7 +6,7 @@ const SKETCHFAB_SEARCH_URL = `${SKETCHFAB_API_BASE}/search`;
 let authTokenCache: nully<SketchfabAuth> = null;
 let authTokenExpiry: nully<number> = null;
 
-export class Sketchfab {
+export default class Sketchfab {
   static async isAuthenticated(): Promise<boolean> {
     try {
       const response = await fetch("/api/auth/status");
