@@ -35,7 +35,7 @@ export class Sketchfab {
     }
   }
 
-  static getLoginUrl(): string | null {
+  static getLoginUrl(): nully<string> {
     if (typeof window !== "undefined") {
       const clientId = process.env.NEXT_PUBLIC_SKETCHFAB_CLIENT_ID;
       const redirectUri = process.env.NEXT_PUBLIC_SKETCHFAB_REDIRECT_URI;
@@ -51,7 +51,7 @@ export class Sketchfab {
     return null;
   }
 
-  static async authenticate(): Promise<SketchfabAuth | null> {
+  static async authenticate(): Promise<nully<SketchfabAuth>> {
     // check if there's a valid token in the cache
     if (authTokenCache && authTokenExpiry && Date.now() < authTokenExpiry) {
       return authTokenCache;
@@ -91,7 +91,7 @@ export class Sketchfab {
       downloadable?: boolean;
       sortBy?: string;
     } = {}
-  ): Promise<SketchfabSearchResult | null> {
+  ): Promise<nully<SketchfabSearchResult>> {
     try {
       const params = new URLSearchParams({
         q: query,
@@ -126,7 +126,7 @@ export class Sketchfab {
     }
   }
 
-  static async getModelDetails(modelId: string): Promise<SketchfabModel | null> {
+  static async getModelDetails(modelId: string): Promise<nully<SketchfabModel>> {
     try {
       const response = await fetch(`${SKETCHFAB_API_BASE}/models/${modelId}`, {
         method: "GET",
@@ -146,7 +146,7 @@ export class Sketchfab {
     }
   }
 
-  static async downloadModel(modelId: string): Promise<string | null> {
+  static async downloadModel(modelId: string): Promise<nully<string>> {
     try {
       const isAuth = await Sketchfab.isAuthenticated();
       if (!isAuth) {
@@ -174,7 +174,7 @@ export class Sketchfab {
     }
   }
 
-  static async getFeaturedModels(count = 12): Promise<SketchfabSearchResult | null> {
+  static async getFeaturedModels(count = 12): Promise<nully<SketchfabSearchResult>> {
     try {
       const params = new URLSearchParams({
         sort_by: "-publishedAt",
