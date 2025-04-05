@@ -1,0 +1,85 @@
+SearchEndpoint {
+  url: "https://api.sketchfab.com/v3/search"
+  method: "GET"
+  params {
+    q (string, required)
+    downloadable: "true"
+    type: "model"
+    archives_flavours: "false
+  }
+}
+
+ModelSearchResponse {
+  results (Array[ModelSearchList], optional)
+}
+
+ModelSearchList {
+  uid (string, optional),
+  animationCount (integer, optional),
+  viewerUrl (string, optional),
+  publishedAt (string, optional),
+  likeCount (integer, optional),
+  commentCount (integer, optional),
+  user (UserRelated, optional),
+  isDownloadable (boolean, optional),
+  name (string, optional),
+  viewCount (integer, optional),
+  thumbnails (ThumbnailsRelated, optional),
+  license (string, optional),
+  isPublished (boolean, optional),
+  staffpickedAt (string,null, optional),
+  archives (inline_model_7, optional),
+  embedUrl (string, optional)
+}
+
+UserRelated {
+  username (string, optional),
+  profileUrl (string, optional),
+  account (string, optional),
+  displayName (string, optional),
+  uid (string, optional),
+  uri (string, optional),
+  avatar (AvatarRelated, optional)
+}
+
+ThumbnailsRelated {
+  images (Array[inline_model_10], optional)
+}
+
+inline_model_7 {
+  source (ArchiveNested, optional),
+  glb (ArchiveNested, optional),
+  usdz (ArchiveNested, optional),
+  gltf (ArchiveNested, optional)
+}
+
+AvatarRelated {
+  images (Array[inline_model_5], optional),
+  uid (string, optional),
+  uri (string, optional)
+}
+
+inline_model_10 {
+  url (string, optional),
+  width (integer, optional),
+  size (integer,null, optional),
+  uid (string, optional),
+  height (integer, optional)
+}
+
+ArchiveNested {
+  faceCount (integer, optional),
+  textureCount (integer, optional),
+  size (integer, optional):
+  archive size (in bytes)
+  ,
+  vertexCount (integer, optional),
+  textureMaxResolution (integer, optional)
+}
+
+inline_model_5 {
+  url (string, optional),
+  width (integer, optional),
+  height (integer, optional),
+  size (integer, optional)
+}
