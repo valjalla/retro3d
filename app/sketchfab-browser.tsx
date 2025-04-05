@@ -50,8 +50,7 @@ export function SketchfabBrowser({ isOpen, onClose, onSelectModel }: SketchfabBr
   const checkAuthStatus = async () => {
     setIsCheckingAuth(true);
     try {
-      const authenticated = await Sketchfab.isAuthenticated();
-      setIsLoggedIn(authenticated);
+      setIsLoggedIn(await Sketchfab.isAuthenticated());
     } catch (error) {
       console.error("Error checking authentication status:", error);
       setIsLoggedIn(false);
@@ -269,7 +268,11 @@ export function SketchfabBrowser({ isOpen, onClose, onSelectModel }: SketchfabBr
             disabled={isDownloading || !isLoggedIn}
             className="rojo full-width-btn"
           />
-          {!isLoggedIn && <div className="forbidden upper">Login required for download</div>}
+          {!isLoggedIn && (
+            <div id="auth-required-button" className="forbidden upper">
+              LOGIN VIA TOP+RIGHT AUTH CONTROL
+            </div>
+          )}
           {isDownloading && <div className="downloading-indicator">Downloading...</div>}
         </div>
       )}

@@ -112,8 +112,8 @@ p {
 .forbidden {
   background: repeating-linear-gradient(
     -45deg,
-    rgba(var(--amarillo-color), 0.3),
-    rgba(var(--amarillo-color), 0.3) 10px,
+    rgba(var(--amarillo-color), 0.2),
+    rgba(var(--amarillo-color), 0.2) 10px,
     transparent 10px,
     transparent 20px
   );
@@ -564,6 +564,11 @@ MARK: buttons
   text-align: center;
   opacity: 0.8;
   white-space: nowrap;
+}
+
+#auth-required-button {
+  padding: 0.5rem 1rem;
+  text-align: center;
 }
 
 /*
