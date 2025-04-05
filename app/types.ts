@@ -90,4 +90,8 @@ export interface SketchfabSearchResult {
   next?: string;
   previous?: string;
   totalCount?: number;
+  cursors: {
+    next?: string;
+    previous?: string;
+  };
 }

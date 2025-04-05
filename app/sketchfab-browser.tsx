@@ -99,7 +99,7 @@ export function SketchfabBrowser({ isOpen, onClose, onSelectModel }: SketchfabBr
       const result = await Sketchfab.searchModels(query, { downloadable: true });
       if (result?.results) {
         setSearchResults(result.results);
-        setCursor(result.next || null);
+        setCursor(result.cursors?.next || null);
         setHasMore(!!result.next);
       }
     } catch (error) {
@@ -111,7 +111,6 @@ export function SketchfabBrowser({ isOpen, onClose, onSelectModel }: SketchfabBr
   };
 
   const handleLoadMore = async () => {
-    // todo: pagination seems broken
     if (!cursor || isLoading) return;
 
     try {
@@ -123,7 +122,7 @@ export function SketchfabBrowser({ isOpen, onClose, onSelectModel }: SketchfabBr
 
       if (result?.results) {
         setSearchResults((prev) => [...prev, ...result.results]);
-        setCursor(result.next || null);
+        setCursor(result.cursors?.next || null);
         setHasMore(!!result.next);
       }
     } catch (error) {

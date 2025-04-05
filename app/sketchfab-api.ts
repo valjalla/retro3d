@@ -119,6 +119,10 @@ export default class Sketchfab {
         next: data.next || null,
         previous: data.previous || null,
         totalCount: data.totalCount || data.results.length,
+        cursors: {
+          next: data.cursors?.next || null,
+          previous: data.cursors?.previous || null,
+        },
       };
     } catch (error) {
       console.error("Sketchfab search error:", error);
@@ -200,6 +204,10 @@ export default class Sketchfab {
         next: data.next || null,
         previous: data.previous || null,
         totalCount: data.totalCount || data.results.length,
+        cursors: {
+          next: data.cursors?.next || null,
+          previous: data.cursors?.previous || null,
+        },
       };
     } catch (error) {
       console.error("Error fetching featured models:", error);
