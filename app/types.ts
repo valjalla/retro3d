@@ -1,5 +1,9 @@
 import type * as THREE from "three";
 
+declare global {
+  type nully<t> = t | null;
+}
+
 // MARK: ThreeJS
 export type MaterialMode = "normal" | "spider" | "holo";
 

@@ -4,15 +4,11 @@ import { cookies } from "next/headers";
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const modelId = url.searchParams.get("modelId");
-  if (!modelId) {
-    return new Response("Model ID is required", { status: 400 });
-  }
+  if (!modelId) return new Response("Model ID is required", { status: 400 });
 
   const cookieStore = await cookies();
   const token = cookieStore.get("sketchfab_token");
-  if (!token) {
-    return new Response("Authentication required", { status: 401 });
-  }
+  if (!token) return new Response("Authentication required", { status: 401 });
 
   try {
     // authenticated request for download url
@@ -30,11 +26,13 @@ export async function GET(request: Request) {
     }
 
     const downloadData = (await response.json()) as SketchfabDownloadResponse;
+    if (!downloadData.glb?.url) return new Response("This model does not support glb download", { status: 400 });
 
     // return approved download urls
     // todo: glb should always return a single file, however, gltf can return a zip, handle that
     return Response.json({
-      downloadUrl: downloadData.glb?.url || downloadData.gltf?.url,
+      // only glb is supported for now
+      downloadUrl: downloadData.glb?.url,
       formats: downloadData,
     });
   } catch (error) {

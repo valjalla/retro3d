@@ -3,8 +3,8 @@ import type { SketchfabAuth, SketchfabDownloadResult, SketchfabModel, SketchfabS
 const SKETCHFAB_API_BASE = "https://api.sketchfab.com/v3";
 const SKETCHFAB_SEARCH_URL = `${SKETCHFAB_API_BASE}/search`;
 
-let authTokenCache: SketchfabAuth | null = null;
-let authTokenExpiry: number | null = null;
+let authTokenCache: nully<SketchfabAuth> = null;
+let authTokenExpiry: nully<number> = null;
 
 export class Sketchfab {
   static async isAuthenticated(): Promise<boolean> {
@@ -35,7 +35,7 @@ export class Sketchfab {
     }
   }
 
-  static getSketchfabLoginUrl(): string | null {
+  static getLoginUrl(): string | null {
     if (typeof window !== "undefined") {
       const clientId = process.env.NEXT_PUBLIC_SKETCHFAB_CLIENT_ID;
       const redirectUri = process.env.NEXT_PUBLIC_SKETCHFAB_REDIRECT_URI;
@@ -51,7 +51,7 @@ export class Sketchfab {
     return null;
   }
 
-  static async authenticateSketchfab(): Promise<SketchfabAuth | null> {
+  static async authenticate(): Promise<SketchfabAuth | null> {
     // check if there's a valid token in the cache
     if (authTokenCache && authTokenExpiry && Date.now() < authTokenExpiry) {
       return authTokenCache;
@@ -82,7 +82,7 @@ export class Sketchfab {
     }
   }
 
-  static async searchSketchfabModels(
+  static async searchModels(
     query: string,
     options: {
       cursor?: string;
@@ -126,7 +126,7 @@ export class Sketchfab {
     }
   }
 
-  static async getSketchfabModelDetails(modelId: string): Promise<SketchfabModel | null> {
+  static async getModelDetails(modelId: string): Promise<SketchfabModel | null> {
     try {
       const response = await fetch(`${SKETCHFAB_API_BASE}/models/${modelId}`, {
         method: "GET",
@@ -146,7 +146,7 @@ export class Sketchfab {
     }
   }
 
-  static async downloadSketchfabModel(modelId: string): Promise<string | null> {
+  static async downloadModel(modelId: string): Promise<string | null> {
     try {
       const isAuth = await Sketchfab.isAuthenticated();
       if (!isAuth) {

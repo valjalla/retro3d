@@ -61,7 +61,7 @@ export function SketchfabBrowser({ isOpen, onClose, onSelectModel }: SketchfabBr
   };
 
   const handleLogin = () => {
-    const loginUrl = Sketchfab.getSketchfabLoginUrl();
+    const loginUrl = Sketchfab.getLoginUrl();
     if (loginUrl) {
       window.location.href = loginUrl;
     } else {
@@ -97,7 +97,7 @@ export function SketchfabBrowser({ isOpen, onClose, onSelectModel }: SketchfabBr
       setSearchResults([]);
       setCursor(null);
 
-      const result = await Sketchfab.searchSketchfabModels(query, { downloadable: true });
+      const result = await Sketchfab.searchModels(query, { downloadable: true });
       if (result?.results) {
         setSearchResults(result.results);
         setCursor(result.next || null);
@@ -117,7 +117,7 @@ export function SketchfabBrowser({ isOpen, onClose, onSelectModel }: SketchfabBr
 
     try {
       setIsLoading(true);
-      const result = await Sketchfab.searchSketchfabModels(searchQuery, {
+      const result = await Sketchfab.searchModels(searchQuery, {
         cursor,
         downloadable: true
       });
@@ -150,7 +150,7 @@ export function SketchfabBrowser({ isOpen, onClose, onSelectModel }: SketchfabBr
       setIsDownloading(true);
       setError(null);
 
-      const downloadUrl = await Sketchfab.downloadSketchfabModel(selectedModel.uid);
+      const downloadUrl = await Sketchfab.downloadModel(selectedModel.uid);
       if (downloadUrl) {
         onSelectModel(downloadUrl, selectedModel.name);
         if (DO_DISMISS_PANEL_ON_DOWNLOAD) onClose();

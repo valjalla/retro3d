@@ -15,9 +15,9 @@ export async function GET() {
   if (isExpired) {
     if (refreshToken) {
       try {
-        const clientId = process.env.SKETCHFAB_CLIENT_ID;
+        const clientId     = process.env.SKETCHFAB_CLIENT_ID;
         const clientSecret = process.env.SKETCHFAB_CLIENT_SECRET;
-        const tokenUrl = process.env.SKETCHFAB_TOKEN_URL;
+        const tokenUrl     = process.env.SKETCHFAB_TOKEN_URL;
         
         if (!clientId || !clientSecret || !tokenUrl) {
           console.error("Missing required environment variables for token refresh");
