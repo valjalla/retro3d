@@ -33,6 +33,7 @@ export async function GET(request: Request) {
         redirect_uri: redirectUri,
       }).toString(),
     });
+    console.log("! ~ GET ~ tokenResponse:", tokenResponse);
 
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
