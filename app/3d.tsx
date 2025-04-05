@@ -109,7 +109,7 @@ export default function retro3d() {
     mainSceneMount                                      = useRef<HTMLDivElement>(null),
     [viewMode, setViewMode]                             = useState<"normal" | "spider" | "holo">(DEFAULT_MATERIAL_MODE),
     [modelLoaded, setModelLoaded]                       = useState(false),
-    [modelStats, setModelStats]                         = useState<ModelStats | null>(null),
+    [modelStats, setModelStats]                         = useState<nully<ModelStats>>(null),
     [rotationEnabled, setRotationEnabled]               = useState<boolean>(MODEL_ROTATION_ENABLED),
     [rotationSpeed, setRotationSpeed]                   = useState<number>(MODEL_ROTATION_SPEED),
     rotationEnabledRef                                  = useRef<boolean>(MODEL_ROTATION_ENABLED),
@@ -128,13 +128,13 @@ export default function retro3d() {
     speedGaugeRef                                       = useRef<HTMLDivElement>(null),
     isDraggingRef                                       = useRef<boolean>(false),
     panelRef                                            = useRef<HTMLDivElement>(null),
-    sketchfabPanelRef                                   = useRef<HTMLDivElement | null>(null),
+    sketchfabPanelRef                                   = useRef<nully<HTMLDivElement>>(null),
     [isPanelDragEnabled, setIsPanelDragEnabled]         = useState(false),
     [isPanelDragging, setIsPanelDragging]               = useState(false),
     [mainPanelPosition, setMainPanelPosition]           = useState({ x: 20, y: 20 }),
     [sketchfabPanelPosition, setSketchfabPanelPosition] = useState({ x: 465, y: 20 }),
     [dragOffset, setDragOffset]                         = useState({ x: 0, y: 0 }),
-    [dragTargetRef, setDragTargetRef]                   = useState<React.RefObject<HTMLDivElement | null> | null>(null),
+    [dragTargetRef, setDragTargetRef]                   = useState<React.RefObject<nully<HTMLDivElement>> | null>(null),
     [isSketchfabPanelOpen, setIsSketchfabPanelOpen]     = useState(true),
     [isFreecam, setIsFreecam]                           = useState(false),
     [isPointerLocked, setIsPointerLocked]               = useState(false),
@@ -346,7 +346,7 @@ export default function retro3d() {
   }, []);
 
   const handlePanelMouseDown = useCallback(
-    (e: React.MouseEvent, targetRef: React.RefObject<HTMLDivElement | null>) => {
+    (e: React.MouseEvent, targetRef: React.RefObject<nully<HTMLDivElement>>) => {
       if (!isPanelDragEnabled) return;
       e.stopPropagation();
 
