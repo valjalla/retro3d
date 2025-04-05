@@ -9,10 +9,10 @@ export async function GET(request: Request) {
   }
 
   try {
-    const clientId = process.env.SKETCHFAB_CLIENT_ID;
+    const clientId     = process.env.SKETCHFAB_CLIENT_ID;
     const clientSecret = process.env.SKETCHFAB_CLIENT_SECRET;
-    const redirectUri = process.env.SKETCHFAB_REDIRECT_URI;
-    const tokenUrl = process.env.SKETCHFAB_TOKEN_URL;
+    const redirectUri  = process.env.SKETCHFAB_REDIRECT_URI;
+    const tokenUrl     = process.env.SKETCHFAB_TOKEN_URL;
 
     if (!clientId || !clientSecret || !redirectUri || !tokenUrl) {
       console.error("Missing required environment variables");
