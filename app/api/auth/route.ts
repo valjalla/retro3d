@@ -13,6 +13,7 @@ export async function GET(request: Request) {
     const clientSecret = process.env.SKETCHFAB_CLIENT_SECRET;
     const redirectUri  = process.env.SKETCHFAB_REDIRECT_URI;
     const tokenUrl     = process.env.SKETCHFAB_TOKEN_URL;
+    console.log("! ~ GET ~ tokenUrl:", tokenUrl);
 
     if (!clientId || !clientSecret || !redirectUri || !tokenUrl) {
       console.error("Missing required environment variables");
