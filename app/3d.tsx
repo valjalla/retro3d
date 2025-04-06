@@ -168,7 +168,6 @@ export default function retro3d() {
 
     const numTicksX = Math.floor(width / TICK_SPACING);
     const numTicksY = Math.floor(height / TICK_SPACING);
-
     setTicksX(Array.from({ length: numTicksX }, (_, i) => i));
     setTicksY(Array.from({ length: numTicksY }, (_, i) => i));
   }, []);
@@ -547,6 +546,7 @@ export default function retro3d() {
   }, [rotationEnabled, rotationSpeed, isFreecam]);
 
   useEffect(() => {
+    calculateAxisTicks();
     window.addEventListener("resize", calculateAxisTicks);
     return () => window.removeEventListener("resize", calculateAxisTicks);
   }, []);
