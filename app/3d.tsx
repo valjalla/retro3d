@@ -478,7 +478,7 @@ export default function retro3d() {
 
       // freecam movement logic
       if (isFreecamRef.current) {
-        const speed = 0.1; // Movement speed, adjustable
+        const speed = 0.1;
         const direction = new THREE.Vector3();
 
         // forward is always the direction the camera is facing (negative z in camera space)
