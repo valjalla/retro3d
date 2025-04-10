@@ -193,7 +193,7 @@ if (direction.length() > 0) {
 }
 ```
 
-without normalization, moving diagonally would be faster (by a factor of $\sqrt{2}$) than moving along a single axis
+without normalization, moving diagonally would be faster (by a factor of $`\sqrt{2}`$) than moving along a single axis
 
 ### dot products in the codebase
 
